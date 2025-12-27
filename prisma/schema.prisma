@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role{
+  admin
+  user
+  author
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  age       Int?
+  provider  String
+  address   String?
+  password  String
+  refresh_token String?
+  phone     String?
+  avatar_url String?
+  role      Role  @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //khai báo 2 chiều
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Author {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  bio        String?
+  avatar_url String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  //khai báo 2 chiều
+  posts      Post[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  publish   Boolean  @default(false)
+
+  author_id  Int
+  author    Author   @relation(fields: [author_id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   // HASH
+  user_id    Int
+  user      User     @relation(fields: [user_id], references: [id])
+
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+
+model Inventory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  quantity  Int
+  address   String?
+  phone     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model provinces {
+  id      String @id
+  name    String
+  name_en String
+  new_id  String
+  region_type String
+  country_code Int
+
+
+  warehouses Warehouse[] @relation("WarehouseProvince")
+  providers Provider[] @relation("ProviderProvince")
+}
+
+model districts {
+  id    String    @id
+  name   String
+  name_en String
+  province_id String
+
+  warehouses Warehouse[] @relation("WarehouseDistrict")
+  providers Provider[] @relation("ProviderDistrict")
+}
+
+model communes{
+  id    String  @id
+  name   String
+  name_en String
+  new_id String?
+  province_id String
+  district_id String
+
+
+  warehouses Warehouse[] @relation("WarehouseCommune")
+  providers Provider[] @relation("ProviderCommune")
+}
+
+
+
+model Warehouse {
+  id String @id @default(cuid())
+  name String
+  address String
+  province_id String
+  district_id String
+  commune_id String
+  phone String
+  allow_create_order Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /** Quan hệ với bảng provinces */
+  province provinces @relation("WarehouseProvince", fields: [province_id], references: [id], onDelete: Restrict)  
+  /** Quan hệ với bảng districts */
+  district districts @relation("WarehouseDistrict", fields: [district_id], references: [id], onDelete: Restrict)
+  /** Quan hệ với bảng communes */
+  commune  communes  @relation("WarehouseCommune", fields: [commune_id],  references: [id], onDelete: Restrict)
+
+  // Quan hệ ngược với products
+  products products[]
+}
+
+
+
+model tags {
+  id    String  @id @default(cuid())
+  name  String
+
+  products products[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model categories { 
+  id    String  @id @default(cuid())
+  name  String
+  
+  products products[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Provider {
+  id    String  @id @default(cuid())
+  name  String
+  phone String
+  typeProvider String
+  desc String?
+  images String[]
+  bank String? // ngân hàng nào
+  bank_account String? //chủ tài khoản
+  bank_number String? // số tài khoản
+
+
+  address String //full địa chỉ
+
+  province_id String
+  district_id String
+  commune_id String
+
+  /** Quan hệ với bảng province */
+  province provinces @relation("ProviderProvince", fields: [province_id], references: [id], onDelete: Restrict)  
+  /** Quan hệ với bảng district */
+  district districts @relation("ProviderDistrict", fields: [district_id], references: [id], onDelete: Restrict)
+  /** Quan hệ với bảng commune */
+  commune  communes  @relation("ProviderCommune", fields: [commune_id],  references: [id], onDelete: Restrict)
+  
+  // Quan hệ ngược với products
+  products products[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model products {
+  id                 String   @id @default(cuid())
+  keyword            String
+  name               String
+  type               String
+  description        String?
+  images             String[]
+  note               String?
+  material           String[]
+  weight             String?
+  
+  is_published       Boolean  @default(false)
+  is_hidden          Boolean  @default(false)
+  
+  // Dùng Json cho thuộc tính động
+  product_attributes Json?
+  
+  last_import_price  Int      @default(0)
+  price_at_counter   Int
+  retail_price       Int
+  sale_price         Int
+  stock              Int
+  
+  warehouse_id       String
+  
+  // Quan hệ
+  warehouse          Warehouse    @relation(fields: [warehouse_id], references: [id])
+  providers          Provider[]
+  tags               tags[]
+  categories         categories[]
+  
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}

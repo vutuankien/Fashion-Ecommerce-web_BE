@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  user
+  author
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String?
+  age           Int?
+  provider      String
+  address       String?
+  password      String
+  refresh_token String?
+  phone         String?
+  avatar_url    String?
+  role          Role     @default(user)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  //khai báo 2 chiều
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Author {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  bio        String?
+  avatar_url String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  //khai báo 2 chiều
+  posts Post[]
+}
+
+model Post {
+  id      Int     @id @default(autoincrement())
+  title   String
+  content String
+  publish Boolean @default(false)
+
+  author_id Int
+  author    Author @relation(fields: [author_id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id      Int    @id @default(autoincrement())
+  token   String // HASH
+  user_id Int
+  user    User   @relation(fields: [user_id], references: [id])
+
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model Inventory {
+  id       Int     @id @default(autoincrement())
+  name     String
+  quantity Int
+  address  String?
+  phone    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Warehouse {
+  id                  Int     @id @default(autoincrement())
+  name                String
+  address             String
+  province_id         String
+  district_id         String
+  commune_id          String
+  phone               String
+  allow_create_order  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

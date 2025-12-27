@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserModule } from './modules/user/user.module';
+import { DatabaseModule } from './database/database.module';
+import { PrismaService } from './prisma/prisma.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { WarehouseModule } from './modules/warehouse/warehouse.module';
+import { RedisModule } from './config/redis.module';
+import { AddressModule } from './modules/address/address.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TagsModule } from './modules/tags/tags.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { ProviderModule } from './modules/provider/provider.module';
+import { ProductsModule } from './modules/products/products.module';
+
+@Module({
+  imports: [RedisModule, UserModule, DatabaseModule, AuthModule, InventoryModule, WarehouseModule, AddressModule, ScheduleModule.forRoot(), TagsModule, CategoriesModule, ProviderModule, ProductsModule],
+  controllers: [AppController],
+  providers: [AppService, PrismaService],
+})
+export class AppModule {}

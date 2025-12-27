@@ -1,0 +1,52 @@
+- Khai báo hằng số const luôn phải viết dạng SNAKE_CASE_UPPER
+- Khai báo biến let luôn phải viết dạng snake_case_lower
+- Khai báo class, function, interface, enum, type luôn phải viết dạng PascalCase
+- Khai báo interface, type luôn phải viết dạng IClassName
+- Luôn có chú thích cho mỗi dòng code (let, cost, if, else, for, do, while, switch, case, default, function, class, import, export, try, catch, finally, throw, return, break, continue, await, async), chú thích bằng jsdoc /\*\* \*/
+- Luôn phá ngoặc nhọn nếu có thể code ngắn gọn hơn
+- Chú thích phải được viết bằng tiếng Việt
+
+
+- class cần được viết theo dạng dưới đây:
+
+
+```
+//#region ____ - ....
+// -----------------------------------------------------------------------------
+/**cấu hình .... */
+export interface IConfig____ {
+
+
+}
+/**bối cảnh .... */
+export interface IContext____ {
+
+
+}
+/**kết quả .... */
+export interface IResult____ {
+
+
+}
+/** .... */
+export interface I____ {
+ exec(context: IContext____): Promise<IResult____>
+}
+/** .... */
+export class ____ implements I____ {
+ constructor(
+   private readonly CONFIG: IConfig____ = {},
+   private readonly MODEL_SOME_THING: ISomeThingModel = load(SomeThingModel),
+   private readonly SERVICE_ABC: IAbc = new Abc(),
+ ) {}
+
+
+ async exec({}: IContext____) {
+   return {}
+ }
+}
+// -----------------------------------------------------------------------------
+//#endregion
+```
+
+
