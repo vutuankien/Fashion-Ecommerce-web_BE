@@ -68,15 +68,9 @@ export class TagsController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu qua service */
-      const DATA = await this.TAGS_SERVICE.getById(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Lấy tag thành công', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.TAGS_SERVICE.getById(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Lấy tag thành công', 200);
   }
 
   /** Controller xóa tag */
@@ -86,15 +80,10 @@ export class TagsController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện xóa qua service */
-      const DATA = await this.TAGS_SERVICE.remove(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Xóa tag thành công', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Thực hiện xóa qua service */
+    const DATA = await this.TAGS_SERVICE.remove(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Xóa tag thành công', 200);
   }
 }
+     

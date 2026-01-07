@@ -1,5 +1,6 @@
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateWarehouseDto } from "./dto/create-warehouse.dto";
+import { UpdateWarehouseDto } from "./dto/update-warehouse.dto";
 import { DeleteWarehouseDto } from "./dto/delete-warehouse.dto";
 
 export class WarehouseRepository {
@@ -49,7 +50,7 @@ export class WarehouseRepository {
 
 
     //Hàm cập nhật warehouse
-    async update(id: string, updateDto: CreateWarehouseDto) {
+    async update(id: string, updateDto: UpdateWarehouseDto) {
         //Cập nhật warehouse theo id
         const DATA = this.PRISMA.warehouse.update({
             where: {

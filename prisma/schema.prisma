@@ -18,8 +18,16 @@ enum Role{
   admin
   user
   author
+  shop
+  employer
 }
 
+
+enum Level{
+  normal
+  priority
+  vip
+}
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -30,6 +38,8 @@ model User {
   password  String
   refresh_token String?
   phone     String?
+  spend     Int?
+  level     Level? @default(normal)
   avatar_url String?
   role      Role  @default(user)
   createdAt DateTime @default(now())
@@ -102,6 +112,7 @@ model provinces {
 
   warehouses Warehouse[] @relation("WarehouseProvince")
   providers Provider[] @relation("ProviderProvince")
+  shops shop[] @relation("ShopProvince")
 }
 
 model districts {
@@ -112,6 +123,7 @@ model districts {
 
   warehouses Warehouse[] @relation("WarehouseDistrict")
   providers Provider[] @relation("ProviderDistrict")
+  shops shop[] @relation("ShopDistrict")
 }
 
 model communes{
@@ -125,6 +137,7 @@ model communes{
 
   warehouses Warehouse[] @relation("WarehouseCommune")
   providers Provider[] @relation("ProviderCommune")
+  shops shop[] @relation("ShopCommune")
 }
 
 
@@ -215,6 +228,7 @@ model products {
   description        String?
   images             String[]
   note               String?
+  brand              String?
   material           String[]
   weight             String?
   
@@ -237,7 +251,62 @@ model products {
   providers          Provider[]
   tags               tags[]
   categories         categories[]
+  shops              shop[]
   
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+}
+
+model shop {
+  id    String  @id @default(cuid())
+  name  String
+  phone String
+  typeProvider String
+  desc String?
+  avatar_url String
+  bank String? // ngân hàng nào
+  bank_account String? //chủ tài khoản
+  bank_number String? // số tài khoản
+
+
+  address String //full địa chỉ
+
+  province_id String
+  district_id String
+  commune_id String
+
+
+  /** Quan hệ với bảng province */
+  province provinces @relation("ShopProvince", fields: [province_id], references: [id], onDelete: Restrict)  
+  /** Quan hệ với bảng district */
+  district districts @relation("ShopDistrict", fields: [district_id], references: [id], onDelete: Restrict)
+  /** Quan hệ với bảng commune */
+  commune  communes  @relation("ShopCommune", fields: [commune_id],  references: [id], onDelete: Restrict)
+  
+  // Quan hệ ngược với products
+  products products[]
+  //Quan hệ ngược với employer
+  employer Employer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employer {
+  id        String      @id @default(cuid())
+  email     String   @unique
+  name      String?
+  age       Int?
+  address   String?
+  password  String
+  refresh_token String?
+  phone     String?
+  salary     Int?
+  avatar_url String?
+  role      Role  @default(employer)
+
+  shop_id String
+  shop shop @relation(fields: [shop_id], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

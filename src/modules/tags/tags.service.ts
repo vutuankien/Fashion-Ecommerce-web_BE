@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -11,22 +11,20 @@ export class TagsService {
 
 
   /**Service tạo tag mới */
-  async create(createTagDto: CreateTagDto) {
+  async create(dto: CreateTagDto) {
+    const exist = await this.prisma.tags.findFirst({
+      where: { name: dto.name },
+    });
 
-    const EXIST_DATA = await this.prisma.tags.findFirst({where:{name: createTagDto.name}})
-
-    if (EXIST_DATA){
-      throw new Error('Tag already exists')
+    if (exist) {
+      throw new ConflictException('Tag already exists');
     }
 
-    /**Tạo tag mới */
-    const DATA = this.prisma.tags.create({
-      data : createTagDto
-    })
-
-    /**Trả về data */
-    return DATA
+    return this.prisma.tags.create({
+      data: dto,
+    });
   }
+
 
 
   getTags(){
@@ -35,13 +33,22 @@ export class TagsService {
   }
 
 
-  getById(id:string){
-    return this.prisma.tags.findUnique({where:{id}})
+  async getById(id:string){
+    const EXIST_DATA = await this.prisma.tags.findUnique({where:{id}})
+    if (!EXIST_DATA){
+      throw new NotFoundException('Tag not found')
+    }
+    return EXIST_DATA
   }
 
 
   /**Service xóa tag */
-  remove(id: string) {
+  async remove(id: string) {
+    const EXIST_DATA = await this.prisma.tags.findUnique({where:{id}})
+
+    if (!EXIST_DATA){
+      throw new NotFoundException('Tag not found')
+    }
     /**Xóa tag */
     return this.prisma.tags.delete({ where: { id } });
   }

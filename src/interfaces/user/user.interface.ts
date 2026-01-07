@@ -23,7 +23,7 @@ export interface IUser {
     refreshToken?: string | null;
 
     //phân quyền người dùng
-    role : 'user' | 'admin' | 'author';
+    role : 'user' | 'admin' | 'author'|'shop'|'employer';
 
     //nhà cung cấp dịch vụ email hay google
     provider: string;

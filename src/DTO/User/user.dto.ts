@@ -9,6 +9,16 @@ export enum UserRole {
     ADMIN = 'admin',
     /** Tác giả */
     AUTHOR = 'author',
+    /** Shop */
+    SHOP = 'shop',
+    /** Nhân viên */
+    EMPLOYER = "employer"
+}
+
+export enum Level {
+    NORMAL = 'normal',
+    VIP = 'vip',
+    PRIORITY = 'priority'
 }
 
 /** Giao diện dữ liệu tạo người dùng */
@@ -37,6 +47,17 @@ export class ICreateUserDto {
     /** Phải thuộc enum UserRole */
     @IsEnum(UserRole)
     role: UserRole;
+
+    /** Cấp độ người dùng */
+    /** Phải thuộc enum Level */
+    @IsEnum(Level)
+    @IsOptional()
+    level?: Level;
+
+    @IsNumber()
+    @IsOptional()
+    @Min(0)
+    spend?: number;
 
     /** Đường dẫn ảnh đại diện */
     /** Phải là chuỗi */

@@ -3,10 +3,19 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 import { RedisConnection } from './config/redis.config';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   /** khởi tạo ứng dụng NestJS */
   const APP = await NestFactory.create(AppModule);
+
+  APP.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    })
+  )
   /** xác định cổng lắng nghe */
   const PORT = process.env.PORT ?? 3000;
 

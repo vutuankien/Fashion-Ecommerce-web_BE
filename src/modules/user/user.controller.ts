@@ -1,5 +1,5 @@
 /** Import các decorator và module của NestJS */
-import { Controller, Get, Body, Post, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Body, Post, Param, Put, Delete, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
 /** Import UserService để tương tác với cơ sở dữ liệu và nghiệp vụ người dùng */
 import { UserService } from './user.service';
 /** Import các DTO định nghĩa cấu trúc dữ liệu cho người dùng */
@@ -135,21 +135,13 @@ export class UserController {
     /** Chỉ admin mới được xem chi tiết */
     @Roles('admin')
     /** Hàm lấy thông tin user */
-    async GetUser(
-        /** ID user */
-        @Param('id') id: string
-    ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Lấy user từ database qua service, chuyển id sang number */
-            const USER = await this.USER_SERVICE.GetUser(Number(id));
-
-            /** Trả về dữ liệu thành công */
-            return ResponseHelper.Success(USER, 'User retrieved successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi hệ thống */
-            return ResponseHelper.Error(error.message, 500);
-        }
+    async GetUser(@Param('id', ParseIntPipe) id: number) {
+        /**
+         * Lấy user từ database qua service
+         */
+        const user = await this.USER_SERVICE.GetUser(id);
+        /** Trả về thành công */
+        return ResponseHelper.Success(user, 'User retrieved successfully', 200);
     }
 
     /**

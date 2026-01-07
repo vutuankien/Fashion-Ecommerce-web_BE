@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { WarehouseRepository } from './warehouse.repository';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class WarehouseService {
   /**Khởi tạo hàm sử dụng warehouse repository */
   constructor (private readonly warehouseRepository: WarehouseRepository) {}
-  create(createWarehouseDto: CreateWarehouseDto) {
+  async create(createWarehouseDto: CreateWarehouseDto) {
     try {
 
       /**sử dụng warehouse repository để tạo kho mới */
-      const DATA = this.warehouseRepository.create(createWarehouseDto);
+      const DATA = await this.warehouseRepository.create(createWarehouseDto);
 
       /**Nếu ko có dữ liệu trả về thì ném lỗi */
       if (!DATA) {
@@ -57,12 +58,12 @@ export class WarehouseService {
   }
 
   /**Hàm tìm kiếm warehouse theo id */
-  findOne(id: string) {
+  async findOne(id: string) {
     /**Sử dụng warehouse repository để tìm kiếm warehouse theo id */
-    const DATA = this.warehouseRepository.findOne(id);
+    const DATA = await this.warehouseRepository.findOne(id);
     /**Nếu ko có dữ liệu trả về thì ném lỗi */
     if (!DATA) {
-      throw new Error('Cannot find warehouse');
+      throw new NotFoundException('Cannot find warehouse');
     }
     /**Trả về dữ liệu */
     return DATA;
@@ -70,14 +71,17 @@ export class WarehouseService {
 
 
   /**hàm update thông tin warehouse */
-  update(id: string, updateWarehouseDto: CreateWarehouseDto) {
+  async update(id: string, updateWarehouseDto: UpdateWarehouseDto) {
+    const EXIST_WAREHOUSE = await this.warehouseRepository.findOne(id)
+
+    if(!EXIST_WAREHOUSE) throw new NotFoundException("Can not found the warehouse")
 
     /**Sử dụng warehouse repository để cập nhật thông tin warehouse */
-    const DATA = this.warehouseRepository.update(id, updateWarehouseDto);
+    const DATA = await this.warehouseRepository.update(id, updateWarehouseDto);
 
     /**Nếu ko có dữ liệu trả về thì ném lỗi */
     if (!DATA) {
-      throw new Error('Cannot update warehouse');
+      throw new NotFoundException('Cannot update warehouse');
     }
 
     /**Trả về dữ liệu */
@@ -85,12 +89,16 @@ export class WarehouseService {
   }
 
   /**Hàm xóa warehouse */
-  remove(id: string) {
-    const DATA = this.warehouseRepository.remove({id});
+  async remove(id: string) {
+
+    const EXIST_WAREHOUSE = await this.warehouseRepository.findOne(id)
+    if(!EXIST_WAREHOUSE) throw new NotFoundException("Can not find the warehouse")
+
+    const DATA = await this.warehouseRepository.remove({id});
 
     /**Nếu ko có dữ liệu trả về thì ném lỗi */
     if (!DATA) {
-      throw new Error('Cannot delete warehouse');
+      throw new NotFoundException('Cannot delete warehouse');
     }
     /**Trả về dữ liệu */
     return DATA;

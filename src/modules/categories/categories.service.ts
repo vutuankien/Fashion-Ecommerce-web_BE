@@ -1,5 +1,5 @@
 /** Import Injectable từ NestJS */
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 /** Import CreateCategoryDto */
 import { CreateCategoryDto } from './dto/create-category.dto';
 /** Import UpdateCategoryDto */
@@ -55,7 +55,7 @@ export class CategoriesService {
     });
 
     /** Nếu không tìm thấy */
-    if (!DATA) throw new Error("Category not found");
+    if (!DATA) throw new NotFoundException("Category not found");
 
     /** Trả về dữ liệu */
     return DATA;
@@ -67,7 +67,7 @@ export class CategoriesService {
     const EXISTING_CATEGORY = await this.PRISMA_SERVICE.categories.findUnique({
       where: { id }
     });
-    if (!EXISTING_CATEGORY) throw new Error("Category not found");
+    if (!EXISTING_CATEGORY) throw new NotFoundException("Category not found");
 
     /** Cập nhật danh mục */
     const DATA = await this.PRISMA_SERVICE.categories.update({
@@ -85,7 +85,7 @@ export class CategoriesService {
     const EXISTING_CATEGORY = await this.PRISMA_SERVICE.categories.findUnique({
       where: { id }
     });
-    if (!EXISTING_CATEGORY) throw new Error("Category not found");
+    if (!EXISTING_CATEGORY) throw new NotFoundException("Category not found");
 
     /** Xóa danh mục */
     const DATA = await this.PRISMA_SERVICE.categories.delete({

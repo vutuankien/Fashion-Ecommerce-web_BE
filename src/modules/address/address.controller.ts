@@ -43,15 +43,9 @@ export class AddressController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu từ service */
-      const DATA = await this.ADDRESS_SERVICE.getProvinceById(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch province by id successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.ADDRESS_SERVICE.getProvinceById(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch province by id successfully', 200);
   }
 
   /** Endpoint lấy danh sách tỉnh thành phân trang */
@@ -105,16 +99,10 @@ export class AddressController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu từ service */
-      const DATA = await this.ADDRESS_SERVICE.getDistrictById(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch district by id successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Lấy dữ liệu từ service */
+    const DATA = await this.ADDRESS_SERVICE.getDistrictById(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch district by id successfully', 200);
   }
 
   /** Endpoint lấy danh sách quận huyện phân trang */
@@ -168,16 +156,11 @@ export class AddressController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu từ service */
-      const DATA = await this.ADDRESS_SERVICE.getCommuneById(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch commune by id successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Lấy dữ liệu từ service */
+    const DATA = await this.ADDRESS_SERVICE.getCommuneById(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch commune by id successfully', 200);
+    
   }
 
   /** Endpoint lấy danh sách xã phường theo quận huyện */

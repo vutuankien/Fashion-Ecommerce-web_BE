@@ -81,7 +81,7 @@ export class RedisConnection implements IRedisConnection {
       console.log('Xác nhận: Kết nối Redis đã sẵn sàng và hoạt động tốt.');
     } catch (error) {
       /** in thông báo khi không thể kết nối hoặc ping thất bại */
-      console.error('Không thể kết nối tới Redis:', error instanceof Error ? error.message : error);
+      console.error('Không thể kết nối tới Redis ip: 05b5f2d6ca864541251619015fb0afde7bbb4c9c97e20549cdadb12c14db7b81:', error instanceof Error ? error.message : error);
     }
     
     /** trả về đối tượng chứa kết nối đã thiết lập */

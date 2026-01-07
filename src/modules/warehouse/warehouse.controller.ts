@@ -6,6 +6,7 @@ import { WarehouseService } from './warehouse.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 /** Import ResponseHelper để định dạng phản hồi API */
 import { ResponseHelper } from 'src/helper/response.helper';
+import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 
 /** Định nghĩa Controller cho Warehouse */
 @Controller('warehouse')
@@ -25,16 +26,10 @@ export class WarehouseController {
     @Body() create_warehouse_dto: CreateWarehouseDto
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Sử dụng warehouse service để tạo mới warehouse */
-      const DATA = await this.WAREHOUSE_SERVICE.create(create_warehouse_dto);
+    const DATA = await this.WAREHOUSE_SERVICE.create(create_warehouse_dto);
 
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Create warehouse successfully', 201);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Create warehouse successfully', 201);
   }
 
   /** Controller lấy tất cả warehouse */
@@ -47,15 +42,9 @@ export class WarehouseController {
     @Query('page') page: number
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Sử dụng warehouse service để lấy tất cả warehouse */
-      const DATA = await this.WAREHOUSE_SERVICE.findAll(limit, page);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Get all warehouses successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.WAREHOUSE_SERVICE.findAll(limit, page);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Get all warehouses successfully', 200);
   }
 
   /** Controller lấy warehouse theo id */
@@ -66,15 +55,9 @@ export class WarehouseController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Sử dụng warehouse service để lấy warehouse theo id */
-      const DATA = await this.WAREHOUSE_SERVICE.findOne(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Get warehouse successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.WAREHOUSE_SERVICE.findOne(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Get warehouse successfully', 200);
   }
 
   /** Controller cập nhật warehouse theo id */
@@ -84,18 +67,12 @@ export class WarehouseController {
     /** Nhận id từ param */
     @Param('id') id: string,
     /** Nhận dữ liệu cập nhật từ body */
-    @Body() update_warehouse_dto: CreateWarehouseDto
+    @Body() update_warehouse_dto: UpdateWarehouseDto
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Sử dụng warehouse service để cập nhật warehouse theo id */
-      const DATA = await this.WAREHOUSE_SERVICE.update(id, update_warehouse_dto);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Update warehouse successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.WAREHOUSE_SERVICE.update(id, update_warehouse_dto);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Update warehouse successfully', 200);
   }
 
   /** Controller xóa warehouse theo id */
@@ -106,14 +83,8 @@ export class WarehouseController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Sử dụng warehouse service để xóa warehouse theo id */
-      const DATA = await this.WAREHOUSE_SERVICE.remove(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Delete warehouse successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.WAREHOUSE_SERVICE.remove(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Delete warehouse successfully', 200);
   }
 }

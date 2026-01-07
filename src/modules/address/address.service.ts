@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, NotFoundError } from 'rxjs';
 
 
 
@@ -68,15 +68,11 @@ export class AddressService {
 
   //Lấy mã tỉnh thành theo id
   async getProvinceById(id: string) {
-    try {
-      //tìm tỉnh thành theo id  trong db
-      const DATA = await this.prisma.provinces.findUnique({ where: { id } });
-      //Trả về response thành công
-      return DATA;
-    } catch (error) {
-      //Trả về response thất bại
-      throw new Error(`Failed to get province by id: ${error.message}`);
-    }
+    const DATA = await this.prisma.provinces.findUnique({ where: { id } });
+
+    if (!DATA) throw new NotFoundException(`Province with id ${id} not found`);
+    //Trả về response thành công
+    return DATA;
   }
 
 
@@ -202,28 +198,22 @@ export class AddressService {
 
   /**Lấy quận huyện theo id */
   async getDistrictById(id: string) {
-    try {
-      //tìm tỉnh thành theo id  trong db
-      const DATA = await this.prisma.districts.findUnique({ where: { id } });
-      //Trả về response thành công
-      return DATA;
-    } catch (error) {
-      //Trả về response thất bại
-      throw new Error(`Failed to get district by id: ${error.message}`);
-    }
+    //tìm tỉnh thành theo id  trong db
+    const DATA = await this.prisma.districts.findUnique({ where: { id } });
+
+    if (!DATA) throw new NotFoundException(`District with id ${id} not found`);
+    //Trả về response thành công
+    return DATA;
   }
 
   /**Lấy quận huyện theo id tỉnh */
   async getDistrictsByProvinceId(province_id: string) {
-    try {
-      //tìm tỉnh thành theo id  trong db
-      const DATA = await this.prisma.districts.findMany({ where: { province_id } });
-      //Trả về response thành công
-      return DATA;
-    } catch (error) {
-      //Trả về response thất bại
-      throw new Error(`Failed to get districts by province id: ${error.message}`);
-    }
+    //tìm tỉnh thành theo id  trong db
+    const DATA = await this.prisma.districts.findMany({ where: { province_id } });
+
+    if(!DATA) throw new NotFoundException(`Districts with province id ${province_id} not found`);
+    //Trả về response thành công
+    return DATA;
   }
 
   /**Lấy danh sách xã phường phân trang */
@@ -264,44 +254,36 @@ export class AddressService {
 
   /**Lấy xã phường theo id */
   async getCommuneById(id: string) {
-    try {
-      //tìm tỉnh thành theo id  trong db
-      const DATA = await this.prisma.communes.findUnique({ where: { id } });
-      //Trả về response thành công
-      return DATA;
-    } catch (error) {
-      //Trả về response thất bại
-      throw new Error(`Failed to get commune by id: ${error.message}`);
-    }
+    const DATA = await this.prisma.communes.findUnique({ where: { id } });
+
+    if (!DATA) throw new NotFoundException(`Commune with id ${id} not found`);
+    //Trả về response thành công
+    return DATA;
   }
 
   /**Lấy danh sách xã phường theo quận huyện và phân trang */
   async getCommunesByDistrictId(district_id: string, limit: number = 10, page: number = 1) {
-    try {
+    const PAGE_VAL = Math.max(1, page);
+    const LIMIT_VAL = Math.max(1, limit);
+    const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
 
-      const PAGE_VAL = Math.max(1, page);
-      const LIMIT_VAL = Math.max(1, limit);
-      const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
+    //tìm tỉnh thành theo district id  trong db
+    const DATA = await this.prisma.communes.findMany({ where: { district_id }, take: LIMIT_VAL, skip: SKIP, orderBy: { id: 'asc' } });
 
-      //tìm tỉnh thành theo district id  trong db
-      const DATA = await this.prisma.communes.findMany({ where: { district_id }, take: LIMIT_VAL, skip: SKIP, orderBy: { id: 'asc' } });
+    /**Lấy tổng số provinces */
+    const TOTAL = await this.prisma.communes.count({ where: { district_id } });
 
-      /**Lấy tổng số provinces */
-      const TOTAL = await this.prisma.communes.count({ where: { district_id } });
+    if (!DATA) throw new NotFoundException(`Commune with district id ${district_id} not found`);
 
 
-      //Trả về response thành công
-      return {
-        data: DATA,
-        total: TOTAL,
-        page: PAGE_VAL,
-        limit: LIMIT_VAL,
-        totalPages: Math.ceil(TOTAL / LIMIT_VAL)
-      };
-    } catch (error) {
-      //Trả về response thất bại
-      throw new Error(`Failed to get communes by district id: ${error.message}`);
-    }
+    //Trả về response thành công
+    return {
+      data: DATA,
+      total: TOTAL,
+      page: PAGE_VAL,
+      limit: LIMIT_VAL,
+      totalPages: Math.ceil(TOTAL / LIMIT_VAL)
+    };
   }
 
   async getCommunesByDistrictIdAndProvinceId(
@@ -313,39 +295,36 @@ export class AddressService {
 
     /**Kiểm tra tham số */
     if (!district_id || !province_id) {
-      throw new Error('district_id and province_id are required');
+      throw new NotFoundException('district_id and province_id are required');
     }
 
-    try {
-      const PAGE_VAL = Math.max(1, page);
-      const LIMIT_VAL = Math.max(1, limit);
-      const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
+    const PAGE_VAL = Math.max(1, page);
+    const LIMIT_VAL = Math.max(1, limit);
+    const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
 
-      /**Chạy song song để lấy data và tổng số records */
-      const [data, total] = await Promise.all([
-        this.prisma.communes.findMany({
-          where: { district_id, province_id },
-          take: LIMIT_VAL,
-          skip: SKIP,
-          orderBy: { id: 'asc' }
-        }),
-        this.prisma.communes.count({
-          where: { district_id, province_id }
-        })
-      ]);
+    /**Chạy song song để lấy data và tổng số records */
+    const [data, total] = await Promise.all([
+      this.prisma.communes.findMany({
+        where: { district_id, province_id },
+        take: LIMIT_VAL,
+        skip: SKIP,
+        orderBy: { id: 'asc' }
+      }),
+      this.prisma.communes.count({
+        where: { district_id, province_id }
+      })
+    ]);
 
-      /**Trả về response thành công */
-      return {
-        data,
-        total, // Tổng số records thực sự
-        page: PAGE_VAL,
-        limit: LIMIT_VAL,
-        totalPages: Math.ceil(total / LIMIT_VAL) // Dùng total, không phải data.length
-      };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to get communes by district id and province id: ${errorMessage}`);
-    }
+    if (!data) throw new NotFoundException(`Commune with district id ${district_id} and province id ${province_id} not found`);
+
+    /**Trả về response thành công */
+    return {
+      data,
+      total, // Tổng số records thực sự
+      page: PAGE_VAL,
+      limit: LIMIT_VAL,
+      totalPages: Math.ceil(total / LIMIT_VAL) // Dùng total, không phải data.length
+    };
   }
 
  /**--------------------------------------------------- */
@@ -435,7 +414,6 @@ export class AddressService {
       }));
     } catch (error) {
       /**Xử lý lỗi và ném ra ngoài */
-      console.error(`Failed to fetch communes for district ${district_id}:`, error);
       return []; // Return empty nếu lỗi
     }
   }

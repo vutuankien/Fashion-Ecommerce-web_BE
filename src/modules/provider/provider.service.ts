@@ -1,5 +1,5 @@
 /** Import Injectable từ NestJS */
-import { Injectable, Query } from '@nestjs/common';
+import { Injectable, NotFoundException, Query } from '@nestjs/common';
 /** Import DTO tạo mới provider */
 import { CreateProviderDto } from './dto/create-provider.dto';
 /** Import DTO cập nhật provider */
@@ -71,7 +71,7 @@ export class ProviderService {
     const DATA = await this.PRISMA_SERVICE.provider.findUnique({where: {id}})
 
     /** Nếu không tìm thấy thì ném lỗi */
-    if(!DATA) throw new Error("Find provider failed")
+    if(!DATA) throw new NotFoundException("Find provider failed")
 
     /** Trả về dữ liệu */
     return DATA
@@ -79,49 +79,60 @@ export class ProviderService {
 
   /** Hàm cập nhật nhà cung cấp */
   async update(id: string, update_provider_dto: UpdateProviderDto) {
-    /** Kiểm tra nếu có cập nhật province_id */
+    /** Kiểm tra provider tồn tại */
+    const EXIST_PROVIDER = await this.PRISMA_SERVICE.provider.findUnique({
+      where: { id },
+    });
+
+    if (!EXIST_PROVIDER) {
+      throw new NotFoundException('Provider not found');
+    }
+
+    /** Validate foreign keys */
     if (update_provider_dto.province_id) {
       const PROVINCE = await this.PRISMA_SERVICE.provinces.findUnique({
-        where: { id: update_provider_dto.province_id }
+        where: { id: update_provider_dto.province_id },
       });
-      if (!PROVINCE) throw new Error("Province not found");
+      if (!PROVINCE) throw new NotFoundException('Province not found');
     }
 
-    /** Kiểm tra nếu có cập nhật district_id */
     if (update_provider_dto.district_id) {
       const DISTRICT = await this.PRISMA_SERVICE.districts.findUnique({
-        where: { id: update_provider_dto.district_id }
+        where: { id: update_provider_dto.district_id },
       });
-      if (!DISTRICT) throw new Error("District not found");
+      if (!DISTRICT) throw new NotFoundException('District not found');
     }
 
-    /** Kiểm tra nếu có cập nhật commune_id */
     if (update_provider_dto.commune_id) {
       const COMMUNE = await this.PRISMA_SERVICE.communes.findUnique({
-        where: { id: update_provider_dto.commune_id }
+        where: { id: update_provider_dto.commune_id },
       });
-      if (!COMMUNE) throw new Error("Commune not found");
+      if (!COMMUNE) throw new NotFoundException('Commune not found');
     }
 
-    /** Cập nhật thông tin nhà cung cấp */
-    const DATA = await this.PRISMA_SERVICE.provider.update({where: {id}, data: update_provider_dto})
-
-    /** Nếu cập nhật thất bại thì ném lỗi */
-    if(!DATA) throw new Error("Update provider failed")
-
-    /** Trả về dữ liệu */
-    return DATA
+    /**Update */
+    return this.PRISMA_SERVICE.provider.update({
+      where: { id },
+      data: update_provider_dto,
+    });
   }
+
 
   /** Hàm xóa nhà cung cấp */
   async remove(id: string) {
-    /** Xóa nhà cung cấp */
-    const DATA = await this.PRISMA_SERVICE.provider.delete({where: {id}})
+    const EXIST = await this.PRISMA_SERVICE.provider.findUnique({
+      where: { id },
+    });
 
-    /** Nếu xóa thất bại thì ném lỗi */
-    if(!DATA) throw new Error("Delete provider failed")
+    if (!EXIST) {
+      throw new NotFoundException('Provider not found');
+    }
 
-    /** Trả về dữ liệu */
-    return DATA
+    const DATA = await this.PRISMA_SERVICE.provider.delete({
+      where: { id },
+    });
+
+    return DATA;
   }
+
 }

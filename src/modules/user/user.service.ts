@@ -8,7 +8,26 @@ import { UserRepository } from './user.repository';
 import { ICreateUserDto } from '../../DTO/User/user.dto';
 /** Nhập khẩu dịch vụ mã hóa mật khẩu */
 import { PasswordService } from '../auth/password.service';
+import { IUser } from 'src/interfaces/user/user.interface';
+/** Interface cho pagination options */
+interface PaginationOptions {
+    page?: number;      // Trang hiện tại (bắt đầu từ 1)
+    limit?: number;     // Số lượng items mỗi trang
+    offset?: number;    // Hoặc dùng offset thay vì page
+}
 
+/** Interface cho kết quả trả về */
+interface PaginatedResult<T> {
+    data: T[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    };
+}
 //#region UserService - Dịch vụ quản lý nghiệp vụ người dùng
 /** Lớp điều phối logic giữa Cache và Repository */
 @Injectable()
@@ -121,22 +140,80 @@ export class UserService {
     /** Nghiệp vụ lấy thông tin một người dùng theo ID */
     async GetUser(id: number) {
         /** Tìm kiếm người dùng theo ID */
-        const USER = await this.CACHE.get(id);
-        /** Nếu không tìm thấy */
-        if (!USER) {
-            /** Ném lỗi không tìm thấy */
-            throw new NotFoundException('Không tìm thấy người dùng');
+        const USER_IN_CACHE = await this.CACHE.get(id);
+        /** Nếu tìm thấy */
+        if(USER_IN_CACHE) return USER_IN_CACHE;
+
+        const USER_IN_DB = await this.REPO.findById(id);
+        if (!USER_IN_DB) {
+            throw new NotFoundException('User not found');
         }
+        
         /** Trả về người dùng */
-        return USER;
+        await this.CACHE.set(USER_IN_DB);
+        return USER_IN_DB;
     }
 
     /** Nghiệp vụ lấy nhiều người dùng theo danh sách ID */
-    async GetManyUser(userIds: number[]) {
-        /** Gọi repo để tìm nhiều user */
-        const USERS = await this.REPO.findManyByIds(userIds);
-        /** Trả về danh sách */
-        return USERS;
+    async GetManyUser(
+        userIds: number[],
+        options?: PaginationOptions
+    ): Promise<PaginatedResult<IUser>> {
+        // Validate đầu vào
+        if (!userIds?.length) {
+            return {
+                data: [],
+                pagination: {
+                    total: 0,
+                    page: 1,
+                    limit: options?.limit || 10,
+                    totalPages: 0,
+                    hasNext: false,
+                    hasPrev: false
+                }
+            };
+        }
+
+        // Loại bỏ ID trùng lặp
+        const uniqueUserIds = [...new Set(userIds)];
+        const total = uniqueUserIds.length;
+
+        // Thiết lập pagination params
+        const limit = options?.limit || 10;
+        const page = options?.page || 1;
+        const offset = options?.offset ?? (page - 1) * limit;
+
+        // Validate page/offset
+        if (page < 1 || limit < 1) {
+            throw new Error('Page và limit phải lớn hơn 0');
+        }
+
+        // Lấy slice của userIds theo pagination
+        const paginatedUserIds = uniqueUserIds.slice(offset, offset + limit);
+
+        // Gọi repo để tìm user
+        const users = await this.REPO.findManyByIds(paginatedUserIds);
+
+        // Tạo map để sắp xếp theo thứ tự input
+        const userMap = new Map(users.map(user => [user.id, user]));
+        const sortedUsers = paginatedUserIds
+            .map(id => userMap.get(id))
+            .filter(Boolean) as IUser[];
+
+        // Tính toán thông tin pagination
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: sortedUsers,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
+        };
     }
 
     /** Nghiệp vụ tìm kiếm động theo trường và giá trị */

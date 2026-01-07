@@ -1,60 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ResponseHelper } from 'src/helper/response.helper';
+import { Roles } from '../auth/roles.decorator';
+import { AuthService } from '../auth/auth.service';
+import { RolesGuard } from '../auth/roles.guard';
+@UseGuards(RolesGuard)
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @Roles("admin")
   async create(@Body() createProductDto: CreateProductDto) {
-    try {
-      const NEW_PRODUCT = await this.productsService.create(createProductDto);
-      ResponseHelper.Success(NEW_PRODUCT, 'Tạo sản phẩm thành công',200);
-    } catch (error) {
-      ResponseHelper.Error(error.message ,500);
-    }
+    const NEW_PRODUCT = await this.productsService.create(createProductDto);
+    return ResponseHelper.Success(NEW_PRODUCT, 'Tạo sản phẩm thành công', 200)
   }
 
-  @Get()
-  async findAll() {
-    try {
-      const ALL_PRODUCTS = await this.productsService.findAll();
-      ResponseHelper.Success(ALL_PRODUCTS, 'Lấy danh sách sản phẩm thành công',200);
-    } catch (error) {
-      ResponseHelper.Error(error.message ,500);
-    }
-  }
-
+  
   @Get(':id')
+  @Roles("admin", "user")
   async findOne(@Param('id') id: string) {
-    try {
-      const PRODUCT = await this.productsService.findOne(id);
-      ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công',200);
-    } catch (error) {
-      ResponseHelper.Error(error.message ,500);
-    }
+    const PRODUCT = await this.productsService.findOne(id);
+    return ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công',200);
   }
 
   @Patch(':id')
+  @Roles("admin")
   async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    try {
-      const PRODUCT = await this.productsService.update(id, updateProductDto);
-      ResponseHelper.Success(PRODUCT, 'Cập nhật sản phẩm thành công',200);
-    } catch (error) {
-      ResponseHelper.Error(error.message ,500);
-    }
+    const PRODUCT = await this.productsService.update(id, updateProductDto);
+    return ResponseHelper.Success(PRODUCT, 'Cập nhật sản phẩm thành công',200);
   }
 
   @Delete(':id')
+  @Roles("admin")
   async remove(@Param('id') id: string) {
-    try {
-      const PRODUCT = await this.productsService.remove(id);
-      ResponseHelper.Success(PRODUCT, 'Xóa sản phẩm thành công',200);
-    } catch (error) {
-      ResponseHelper.Error(error.message ,500);
-    }
+    const PRODUCT = await this.productsService.remove(id);
+    return ResponseHelper.Success(PRODUCT, 'Xóa sản phẩm thành công',200);
   }
 }

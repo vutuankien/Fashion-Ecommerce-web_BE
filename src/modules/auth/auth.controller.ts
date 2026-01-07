@@ -1,7 +1,7 @@
 /** Import các decorator từ NestJS */
 import { Body, Controller, Post } from '@nestjs/common';
 /** Import các DTO cho Auth */
-import { ILoginDto, IRegisterDto } from 'src/DTO/Auth/auth.dto';
+import { IForgotPasswordDto, ILoginDto, IRegisterDto } from 'src/DTO/Auth/auth.dto';
 /** Import AuthService để xử lý nghiệp vụ xác thực */
 import { AuthService } from './auth.service';
 /** Import ResponseHelper để định dạng phản hồi API */
@@ -9,7 +9,7 @@ import { ResponseHelper } from 'src/helper/response.helper';
 
 /** Định nghĩa Controller cho Auth */
 @Controller('auth')
-/** Lớp AuthController */
+/** Lớp AuthController */   
 export class AuthController {
     /** Hàm khởi tạo với AuthService */
     constructor(
@@ -51,29 +51,23 @@ export class AuthController {
      * @param login_dto 
      * @returns 
      */
-    @Post('/login')
+    @Post('login')
     /** Hàm xử lý đăng nhập */
     async login(
         /** Nhận dữ liệu từ body */
         @Body() login_dto: ILoginDto
     ) {
         /** Khối try để bắt lỗi */
-        try {
-            /** Kiểm tra các trường bắt buộc */
-            if (!login_dto.email || !login_dto.password) {
-                /** Trả về lỗi nếu thiếu thông tin */
-                return ResponseHelper.Error('Missing required fields', 400);
-            }
-
-            /** Thực hiện đăng nhập qua service */
-            const LOGIN_RESPONSE = await this.AUTH_SERVICE.Login(login_dto);
-
-            /** Trả về Response gọi từ Response Helper */
-            return ResponseHelper.Success(LOGIN_RESPONSE, 'User logged in successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu có */
-            return ResponseHelper.Error(error.message, 500);
+        if (!login_dto.email || !login_dto.password) {
+            /** Trả về lỗi nếu thiếu thông tin */
+            return ResponseHelper.Error('Missing required fields', 400);
         }
+
+        /** Thực hiện đăng nhập qua service */
+        const LOGIN_RESPONSE = await this.AUTH_SERVICE.Login(login_dto);
+
+        /** Trả về Response gọi từ Response Helper */
+        return ResponseHelper.Success(LOGIN_RESPONSE, 'User logged in successfully', 200);
     }
 
     /** Endpoint làm mới token */
@@ -84,43 +78,26 @@ export class AuthController {
         @Body('refresh_token') refresh_token: string
     ) {
         /** Khối try để bắt lỗi */
-        try {
-            /** Triển khai logic refresh token */
-            const REFRESH_RESPONSE = await this.AUTH_SERVICE.RefreshToken({ refresh_token: refresh_token });
+        const REFRESH_RESPONSE = await this.AUTH_SERVICE.RefreshToken({ refresh_token: refresh_token });
 
-            /** Trả về Response gọi từ Response Helper */
-            return ResponseHelper.Success(REFRESH_RESPONSE, 'Token refreshed successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu có */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về Response gọi từ Response Helper */
+        return ResponseHelper.Success(REFRESH_RESPONSE, 'Token refreshed successfully', 200);
     }
 
     /** Endpoint quên mật khẩu */
     @Post('/forgot-password')
-    /** Hàm xử lý quên mật khẩu */
     async forgotPassword(
-        /** Nhận email từ body */
-        @Body('email') email: string
+        @Body() dto: IForgotPasswordDto
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Kiểm tra email có hợp lệ không */
-            if (!email) {
-                /** Trả về lỗi nếu thiếu email */
-                return ResponseHelper.Error('Email is required', 400);
-            }
+        const FORGOT_RESPONSE = await this.AUTH_SERVICE.ForgetPassword(dto);
 
-            /** Thực hiện yêu cầu quên mật khẩu */
-            const FORGOT_RESPONSE = await this.AUTH_SERVICE.ForgetPassword({ email });
-
-            /** Trả về Response gọi từ Response Helper */
-            return ResponseHelper.Success(FORGOT_RESPONSE, 'Password reset link sent successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu có */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        return ResponseHelper.Success(
+            FORGOT_RESPONSE,
+            'Password reset link sent successfully',
+            200,
+        );
     }
+
 
     /** Endpoint đăng xuất */
     @Post('/log-out')
@@ -130,15 +107,9 @@ export class AuthController {
         @Body('user_id') user_id: number
     ) {
         /** Khối try để bắt lỗi */
-        try {
-            /** Thực hiện đăng xuất qua service */
-            await this.AUTH_SERVICE.Logout(user_id);
+        await this.AUTH_SERVICE.Logout(user_id);
 
-            /** Trả về Response gọi từ Response Helper */
-            return ResponseHelper.Success(null, 'User logged out successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu có */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về Response gọi từ Response Helper */
+        return ResponseHelper.Success(null, 'User logged out successfully', 200);
     }
 }

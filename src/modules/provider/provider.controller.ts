@@ -26,17 +26,11 @@ export class ProviderController {
     /** Nhận dữ liệu từ request body */
     @Body() create_provider_dto: CreateProviderDto
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện tạo mới qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.create(create_provider_dto);
-      
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(RESPONSE,"Create provider successfully",201);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message,500);
-    }
+    /** Thực hiện tạo mới qua service */
+    const RESPONSE = await this.PROVIDER_SERVICE.create(create_provider_dto);
+
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(RESPONSE, "Create provider successfully", 201);
   }
 
   /** Controller lấy danh sách provider */
@@ -63,17 +57,11 @@ export class ProviderController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.findOne(id);
+    /** Thực hiện lấy dữ liệu qua service */
+    const RESPONSE = await this.PROVIDER_SERVICE.findOne(id);
 
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(RESPONSE,"Get provider successfully",200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message,500);
-    }
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(RESPONSE, "Get provider successfully", 200);
   }
 
   /** Controller cập nhật provider */
@@ -85,17 +73,11 @@ export class ProviderController {
     /** Nhận dữ liệu cập nhật từ body */
     @Body() update_provider_dto: UpdateProviderDto
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện cập nhật qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.update(id, update_provider_dto);
+    /** Thực hiện cập nhật qua service */
+    const RESPONSE = await this.PROVIDER_SERVICE.update(id, update_provider_dto);
 
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(RESPONSE,"Update provider successfully",200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message,500);
-    }
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(RESPONSE, "Update provider successfully", 200);
   }
 
   /** Controller xóa provider */
@@ -105,16 +87,11 @@ export class ProviderController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện xóa qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.remove(id);
+    /** Thực hiện xóa qua service */
+    const RESPONSE = await this.PROVIDER_SERVICE.remove(id);
 
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(RESPONSE,"Delete provider successfully",200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message,500);
-    }
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(RESPONSE, "Delete provider successfully", 200);
+      /** Thực hiện xóa qua service */
   }
 }

@@ -1,5 +1,5 @@
 import { TokenService } from './token.service';
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ILoginDto, IRefreshTokenDto, IRegisterDto, IForgotPasswordDto, IResetPasswordDto } from 'src/DTO/Auth/auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PasswordService } from './password.service';
@@ -58,55 +58,74 @@ export class AuthService {
      * Đăng nhập người dùng
      * @param login_dto - Thông tin đăng nhập
      */
-    async Login(login_dto: ILoginDto) {
-        /**Kiểm tra thông tin đăng nhập */
-        if (!login_dto.email || !login_dto.password)
-            throw new ConflictException('Missing required fields');
+    async Login(dto: ILoginDto) {
+        /** Kiểm tra email và password có tồn tại không */
+        if (!dto.email || !dto.password) {
+            /** Ném lỗi BadRequest nếu thiếu email hoặc password */
+            throw new BadRequestException('Missing email or password');
+        }
 
-        /**Tìm user trong cache hoặc database */
-        const EXISTIN_USER = await this.user_cache.getByEmail(login_dto.email);
-        
-        /**Nếu không tìm thấy user thì ném lỗi */
-        if (!EXISTIN_USER) throw new UnauthorizedException('Unauthorized');
-
-        /**Kiểm tra mật khẩu có tồn tại không */
-        if (!EXISTIN_USER.password) throw new UnauthorizedException('Invalid user data');
-
-        /**So sánh mật khẩu */
-        const IS_PASSWORD_VALID = await PasswordService.ComparePassword(
-            login_dto.password,
-            EXISTIN_USER.password,
-        );
-        
-        /**Nếu mật khẩu không đúng thì ném lỗi */
-        if (!IS_PASSWORD_VALID) throw new UnauthorizedException('Password is incorrect');
-
-        const REFRESH_TOKEN = this.token_service.GenerateRefreshToken({
-            user_id: EXISTIN_USER.id,
-            role: EXISTIN_USER.role,});
-
-        /**Mã hóa refresh token trước khi lưu vào database */
-        const HASHED_REFRESH_TOKEN = await PasswordService.HashPassword(REFRESH_TOKEN);
-
-        /**Lưu refresh token đã mã hóa vào database */
-        await this.prisma.user.update({
-            where: { id: EXISTIN_USER.id },
-            data: { refresh_token: HASHED_REFRESH_TOKEN },
+        /** Tìm user trong database theo email */
+        const user = await this.prisma.user.findUnique({
+            /** Điều kiện tìm kiếm theo email */
+            where: { email: dto.email },
         });
-        
 
+        /** Kiểm tra user có tồn tại và có password không */
+        if (!user || !user.password) {
+            /** Ném lỗi Unauthorized nếu thông tin đăng nhập không hợp lệ */
+            throw new UnauthorizedException('Invalid credentials');
+        }
 
+        /** So sánh password người dùng nhập với password đã mã hóa trong database */
+        const isValid = await PasswordService.ComparePassword(
+            /** Password người dùng nhập */
+            dto.password,
+            /** Password đã mã hóa trong database */
+            user.password,
+        );
 
-        /**Trả về access token và refresh token */
+        /** Kiểm tra password có hợp lệ không */
+        if (!isValid) {
+            /** Ném lỗi Unauthorized nếu password không đúng */
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        /** Tạo refresh token mới cho user */
+        const refreshToken = this.token_service.GenerateRefreshToken({
+            /** ID của user */
+            user_id: user.id,
+            /** Role của user */
+            role: user.role,
+        });
+
+        /** Cập nhật refresh token đã mã hóa vào database */
+        await this.prisma.user.update({
+            /** Điều kiện cập nhật theo user id */
+            where: { id: user.id },
+            /** Dữ liệu cần cập nhật */
+            data: {
+                /** Mã hóa refresh token trước khi lưu */
+                refresh_token: await PasswordService.HashPassword(refreshToken),
+            },
+        });
+
+        /** Trả về access token và refresh token */
         return {
+            /** Tạo access token mới */
             access_token: this.token_service.GenerateToken({
-                user_id: EXISTIN_USER.id,
-                email: EXISTIN_USER.email,
-                role: EXISTIN_USER.role,
+                /** ID của user */
+                user_id: user.id,
+                /** Email của user */
+                email: user.email,
+                /** Role của user */
+                role: user.role,
             }),
-            refresh_token: REFRESH_TOKEN,
+            /** Refresh token chưa mã hóa để trả về cho client */
+            refresh_token: refreshToken,
         };
     }
+
 
 
     /**
@@ -114,43 +133,68 @@ export class AuthService {
      * @param dto - Thông tin refresh token
      */
     async RefreshToken(dto: IRefreshTokenDto) {
-        /**Xác thực refresh token */
-        const payload = this.jwt_service.verify(dto.refresh_token);
+        /**Nếu ko tồn tại refresh_token thì ném lỗi  */
+        if (!dto.refresh_token) {
+            throw new BadRequestException('refresh_token is required');
+        }
+
+        /**Tạo payload từ refresh_token */
+        let payload: any;
+
+        /**Try catch để bắt lỗi */
+        try {
+            /**Xác thực refresh_token */
+            payload = this.jwt_service.verify(dto.refresh_token);
+        } catch (err) {
+            /**Nếu refresh_token không hợp lệ thì ném lỗi */
+            throw new UnauthorizedException('Invalid refresh token');
+        }
 
         /**Tìm user trong database */
-        const EXISTIN_USER = await this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
         });
 
-        /**Nếu không tìm thấy user hoặc không có refresh token thì ném lỗi */
-        if (!EXISTIN_USER || !EXISTIN_USER.refresh_token) throw new UnauthorizedException();
+        /**Nếu không tìm thấy user hoặc không có refresh_token thì ném lỗi */
+        if (!user || !user.refresh_token) {
+            /**Nếu refresh_token không hợp lệ thì ném lỗi */
+            throw new UnauthorizedException('Invalid refresh token');
+        }
 
-        /**Kiểm tra refresh token có hợp lệ không */
-        const IS_VALID = await PasswordService.ComparePassword(
+        /**So sánh refresh_token */
+        const isValid = await PasswordService.ComparePassword(
             dto.refresh_token,
-            EXISTIN_USER.refresh_token,
+            user.refresh_token,
         );
 
-        /**Nếu refresh token không hợp lệ thì ném lỗi */
-        if (!IS_VALID) throw new UnauthorizedException();
+        /**Nếu refresh_token không hợp lệ thì ném lỗi */
+        if (!isValid) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
 
-        /**Tạo access token mới */
-        const NEW_ACCESS_TOKEN = this.token_service.GenerateToken({
-            user_id: EXISTIN_USER.id,
-            email: EXISTIN_USER.email,
-            role: EXISTIN_USER.role,
+        /**Tạo access_token */
+        const access_token = this.token_service.GenerateToken({
+            user_id: user.id,
+            email: user.email,
+            role: user.role,
         });
 
-
-        /**Trả về access token mới */
-        return { access_token: NEW_ACCESS_TOKEN };
+        /**Trả về access_token */
+        return { access_token };
     }
+
 
     /**
      * Đăng xuất người dùng
      * @param user_id - ID của người dùng
      */
     async Logout(user_id: number) {
+
+        const USER_IN_CACHE = await this.user_cache.get(user_id);
+
+        if (!USER_IN_CACHE) {
+            throw new NotFoundException('User not found');
+        }
 
 
         /**Xoá refresh token khỏi cache */

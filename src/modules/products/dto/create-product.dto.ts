@@ -5,7 +5,8 @@ import { IsArray, IsBoolean, IsNumber, IsObject, IsString, IsOptional } from "cl
 export class CreateProductDto {
     /** Từ khóa tìm kiếm sản phẩm */
     @IsString()
-    keyword: string;
+    @IsOptional()
+    keyword?: string;
 
     /** Tên sản phẩm */
     @IsString()
@@ -34,6 +35,11 @@ export class CreateProductDto {
     @IsArray()
     @IsString({each: true})
     material: string[];
+
+    /** Thương hiệu sản phẩm */
+    @IsString()
+    @IsOptional()
+    brand?: string;
 
     /** Khối lượng sản phẩm */
     @IsString()

@@ -26,16 +26,9 @@ export class CategoriesController {
     /** Nhận dữ liệu từ request body */
     @Body() create_category_dto: CreateCategoryDto
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện tạo mới qua service */
-      const DATA = await this.CATEGORIES_SERVICE.create(create_category_dto);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Create category successfully', 201);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.CATEGORIES_SERVICE.create(create_category_dto);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Create category successfully', 201);
   }
 
   /** Controller lấy danh sách category */
@@ -43,15 +36,9 @@ export class CategoriesController {
   /** Hàm xử lý lấy danh sách */
   async findAll() {
     /** Khối try để bắt lỗi */
-    try {
-      /** Lấy toàn bộ danh sách qua service */
-      const DATA = await this.CATEGORIES_SERVICE.findAll();
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Get all categories successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.CATEGORIES_SERVICE.findAll();
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Get all categories successfully', 200);
   }
 
   /** Controller lấy category theo id */
@@ -62,15 +49,9 @@ export class CategoriesController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Lấy dữ liệu qua service */
-      const DATA = await this.CATEGORIES_SERVICE.findOne(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Get category successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.CATEGORIES_SERVICE.findOne(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Get category successfully', 200);
   }
 
   /** Controller cập nhật category */
@@ -83,15 +64,9 @@ export class CategoriesController {
     @Body() update_category_dto: UpdateCategoryDto
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện cập nhật qua service */
-      const DATA = await this.CATEGORIES_SERVICE.update(id, update_category_dto);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Update category successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.CATEGORIES_SERVICE.update(id, update_category_dto);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Update category successfully', 200);
   }
 
   /** Controller xóa category */
@@ -102,14 +77,8 @@ export class CategoriesController {
     @Param('id') id: string
   ) {
     /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện xóa qua service */
-      const DATA = await this.CATEGORIES_SERVICE.remove(id);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Delete category successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    const DATA = await this.CATEGORIES_SERVICE.remove(id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Delete category successfully', 200);
   }
 }
