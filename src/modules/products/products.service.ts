@@ -22,20 +22,91 @@ export class ProductsService {
     return NEW_PRODUCT;
   }
 
-  /** Lấy danh sách sản phẩm */
-  async findAll(limit?: number, page?: number) {
-    // Note: Removed cache getAll() check here because it returns random cached items
-    // (scan results) which doesn't support correct pagination or full dataset retrieval.
-    // We always go to DB for the list to ensure correct pagination meta.
+  /** Lấy danh sách sản phẩm với pagination, search, sort, filters */
+  async findAll(query?: { 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    sortBy?: string; 
+    sortOrder?: 'asc' | 'desc';
+    minPrice?: number;
+    maxPrice?: number;
+    brand?: string;
+    type?: string;
+    is_published?: boolean;
+    warehouse_id?: string;
+  }) {
+    /** Destructure và set default values */
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      minPrice,
+      maxPrice,
+      brand,
+      type,
+      is_published,
+      warehouse_id
+    } = query || {};
 
-    /** Nếu cache rỗng, lấy từ database (kết quả trả về chứa data và meta) */
-    const result = await this.productsRepo.findAll(limit, page);
-    
-    /** Lưu danh sách lấy được vào cache */
-    await this.productsCache.setAll(result.data);
-    
-    /** Trả về danh sách sản phẩm kèm metadata */
-    return result;
+    /** Validate và normalize */
+    const MAX_LIMIT = Math.max(1, Math.min(limit, 100));
+    const CURRENT_PAGE = Math.max(page, 1);
+    const OFFSET = (CURRENT_PAGE - 1) * MAX_LIMIT;
+
+    /** Build where clause với search và filters */
+    const where: Record<string, unknown> = {};
+
+    /** Search conditions - tìm kiếm theo name, keyword, brand */
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { keyword: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    /** Filter conditions */
+    if (brand) where.brand = { contains: brand, mode: 'insensitive' };
+    if (type) where.type = type;
+    if (is_published !== undefined) where.is_published = is_published;
+    if (warehouse_id) where.warehouse_id = warehouse_id;
+
+    /** Price range filter */
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const price_filter: Record<string, number> = {};
+      if (minPrice !== undefined) price_filter.gte = minPrice;
+      if (maxPrice !== undefined) price_filter.lte = maxPrice;
+      where.sale_price = price_filter;
+    }
+
+    /** Đếm tổng số records */
+    const TOTAL = await this.productsRepo.count(where);
+    const TOTAL_PAGE = Math.max(1, Math.ceil(TOTAL / MAX_LIMIT));
+
+    /** Lấy danh sách từ DB */
+    const DATA = await this.productsRepo.findMany({
+      where,
+      take: MAX_LIMIT,
+      skip: OFFSET,
+      orderBy: { [sortBy]: sortOrder }
+    });
+
+    /** Lưu vào cache */
+    if (DATA && DATA.length > 0) {
+      await this.productsCache.setAll(DATA);
+    }
+
+    /** Trả về với pagination info */
+    return {
+      data: DATA,
+      total: TOTAL,
+      page: CURRENT_PAGE,
+      limit: MAX_LIMIT,
+      totalPage: TOTAL_PAGE
+    };
   }
 
   /** Lấy chi tiết một sản phẩm */

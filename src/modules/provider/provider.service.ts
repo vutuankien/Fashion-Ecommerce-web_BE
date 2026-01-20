@@ -53,16 +53,62 @@ export class ProviderService {
     return DATA;
   }
 
-  /** Hàm lấy danh sách tất cả nhà cung cấp */
-  async findAll() {
+  /** Hàm lấy danh sách tất cả nhà cung cấp với pagination, search, sort, filters */
+  async findAll(query?: { page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc'; typeProvider?: string; province_id?: string }) {
+    /** Destructure và set default values */
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      typeProvider,
+      province_id
+    } = query || {};
+
+    /** Validate và normalize */
+    const MAX_LIMIT = Math.max(1, Math.min(limit, 100));
+    const CURRENT_PAGE = Math.max(page, 1);
+    const OFFSET = (CURRENT_PAGE - 1) * MAX_LIMIT;
+
+    /** Build where clause */
+    const where: Record<string, unknown> = {};
+
+    /** Search conditions - tìm kiếm theo name, phone */
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    /** Filter conditions */
+    if (typeProvider) where.typeProvider = typeProvider;
+    if (province_id) where.province_id = province_id;
+
+    /** Đếm tổng số records */
+    const TOTAL = await this.PRISMA_SERVICE.provider.count({ where });
+    const TOTAL_PAGE = Math.max(1, Math.ceil(TOTAL / MAX_LIMIT));
+
     /** Lấy danh sách từ DB */
-    const DATA = await this.PRISMA_SERVICE.provider.findMany()
+    const DATA = await this.PRISMA_SERVICE.provider.findMany({
+      where,
+      take: MAX_LIMIT,
+      skip: OFFSET,
+      orderBy: { [sortBy]: sortOrder }
+    });
 
     /** Nếu không có dữ liệu thì ném lỗi */
     if(!DATA) throw new Error("Find all provider failed")
 
-    /** Trả về dữ liệu */
-    return DATA
+    /** Trả về với pagination info */
+    return {
+      data: DATA,
+      total: TOTAL,
+      page: CURRENT_PAGE,
+      limit: MAX_LIMIT,
+      totalPage: TOTAL_PAGE
+    };
   }
 
   /** Hàm tìm nhà cung cấp theo id */

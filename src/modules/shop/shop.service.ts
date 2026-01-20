@@ -4,6 +4,8 @@ import { UpdateShopDto } from './dto/update-shop.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import sharp from 'sharp';
+/** Import ShopCache */
+import { ShopCache } from './shop.cache';
 
 /** Service quản lý cửa hàng */
 @Injectable()
@@ -12,6 +14,8 @@ export class ShopService {
   constructor(
     private readonly PRISMA_SERVICE: PrismaService,
     private readonly CLOUDINARY_SERVICE: CloudinaryService,
+    /** Inject ShopCache */
+    private readonly SHOP_CACHE: ShopCache
   ) {}
 
   /** Tạo cửa hàng mới */
@@ -58,13 +62,21 @@ export class ShopService {
         avatar_url = UPLOAD_RESULT.secure_url;
       }
 
+      /** Kiểm tra userId */
+      if (!create_shop_dto.userId) throw new BadRequestException('User ID is required');
+
       /** Tạo cửa hàng mới trong database */
       const SHOP = await this.PRISMA_SERVICE.shop.create({
         data: {
           ...create_shop_dto,
           avatar_url: avatar_url || create_shop_dto.avatar_url || '',
+          userId: create_shop_dto.userId,
         },
       });
+      
+      /** Invalidate cache sau khi tạo mới */
+      await this.SHOP_CACHE.invalidateAll();
+      
       /** Trả về thông tin cửa hàng */
       return SHOP;
     } catch (error) {
@@ -89,11 +101,23 @@ export class ShopService {
       const CURRENT_PAGE = Math.min(Math.max(page ?? 1, 1), TOTAL_PAGE);
       const OFFSET = (CURRENT_PAGE - 1) * MAX_LIMIT;
 
-      // Fetch paginated data
-      const SHOP = await this.PRISMA_SERVICE.shop.findMany({
-        take: MAX_LIMIT,
-        skip: OFFSET,
-      });
+      /** Kiểm tra cache trước */
+      const cached_shops = await this.SHOP_CACHE.getPage(CURRENT_PAGE, MAX_LIMIT);
+      
+      let SHOP;
+      /** Nếu có cache thì sử dụng */
+      if (cached_shops) {
+        SHOP = cached_shops;
+      } else {
+        /** Fetch paginated data từ DB */
+        SHOP = await this.PRISMA_SERVICE.shop.findMany({
+          take: MAX_LIMIT,
+          skip: OFFSET,
+        });
+        
+        /** Lưu vào cache */
+        await this.SHOP_CACHE.setPage(CURRENT_PAGE, MAX_LIMIT, SHOP);
+      }
 
       console.info('[ShopService.FindAll] limit=', MAX_LIMIT, 'requestedPage=', page, 'currentPage=', CURRENT_PAGE, 'offset=', OFFSET, 'resultCount=', Array.isArray(SHOP) ? SHOP.length : 0, 'total=', TOTAL, 'totalPage=', TOTAL_PAGE);
 
@@ -112,11 +136,8 @@ export class ShopService {
 
   /** Lấy thông tin chi tiết một cửa hàng */
   async FindOne(id: string) {
-    const EXIST_SHOP = await this.PRISMA_SERVICE.shop.findUnique({
-      where:{
-        id,
-      }
-    })
+    /** Lấy từ cache hoặc DB */
+    const EXIST_SHOP = await this.SHOP_CACHE.get(id);
 
     if(!EXIST_SHOP) throw new NotFoundException("No Shop Found")
     /** Tìm cửa hàng theo id */
@@ -133,12 +154,18 @@ export class ShopService {
 
     if(!EXIST_SHOP) throw new NotFoundException("No Shop Found")
     /** Cập nhật cửa hàng trong database */
-    return this.PRISMA_SERVICE.shop.update({
+    const DATA = await this.PRISMA_SERVICE.shop.update({
       where: {
         id,
       },
       data: update_shop_dto,
     });
+    
+    /** Xóa cache của shop này và invalidate all */
+    await this.SHOP_CACHE.delete(id);
+    await this.SHOP_CACHE.invalidateAll();
+    
+    return DATA;
   }
 
   /** Xóa cửa hàng */
@@ -156,6 +183,10 @@ export class ShopService {
         id,
       },
     });
+
+    /** Xóa cache của shop này và invalidate all */
+    await this.SHOP_CACHE.delete(id);
+    await this.SHOP_CACHE.invalidateAll();
 
     return DATA;
   }

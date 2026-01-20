@@ -76,5 +76,20 @@ export class WarehouseRepository {
         return DATA
     }
 
+    /** Hàm tìm kiếm warehouse với filters */
+    async findManyWithFilters(limit: number, skip: number, where: Record<string, unknown>, sortBy: string, sortOrder: string) {
+        return this.PRISMA.warehouse.findMany({
+            where,
+            take: limit,
+            skip,
+            orderBy: { [sortBy]: sortOrder }
+        });
+    }
+
+    /** Đếm số lượng warehouse với filters */
+    async countWithFilters(where: Record<string, unknown>) {
+        return this.PRISMA.warehouse.count({ where });
+    }
+
 
 }

@@ -1,5 +1,5 @@
 /** Import các decorator từ NestJS */
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 /** Import CategoriesService để xử lý nghiệp vụ danh mục */
 import { CategoriesService } from './categories.service';
 /** Import CreateCategoryDto để định nghĩa dữ liệu tạo mới */
@@ -34,9 +34,20 @@ export class CategoriesController {
   /** Controller lấy danh sách category */
   @Get()
   /** Hàm xử lý lấy danh sách */
-  async findAll() {
+  async findAll(
+    /** Nhận page từ query */
+    @Query('page') page?: number,
+    /** Nhận limit từ query */
+    @Query('limit') limit?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
     /** Khối try để bắt lỗi */
-    const DATA = await this.CATEGORIES_SERVICE.findAll();
+    const DATA = await this.CATEGORIES_SERVICE.findAll({ page, limit, search, sortBy, sortOrder });
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Get all categories successfully', 200);
   }

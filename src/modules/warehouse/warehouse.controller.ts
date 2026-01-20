@@ -37,12 +37,27 @@ export class WarehouseController {
   /** Hàm xử lý lấy danh sách */
   async findAll(
     /** Nhận limit từ query */
-    @Query('limit') limit: number,
+    @Query('limit') limit?: number,
     /** Nhận page từ query */
-    @Query('page') page: number
+    @Query('page') page?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    /** Nhận province_id từ query */
+    @Query('province_id') province_id?: string,
+    /** Nhận district_id từ query */
+    @Query('district_id') district_id?: string,
+    /** Nhận allow_create_order từ query */
+    @Query('allow_create_order') allow_create_order?: boolean
   ) {
     /** Khối try để bắt lỗi */
-    const DATA = await this.WAREHOUSE_SERVICE.findAll(limit, page);
+    const DATA = await this.WAREHOUSE_SERVICE.findAll({ 
+      limit, page, search, sortBy, sortOrder, 
+      province_id, district_id, allow_create_order 
+    });
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Get all warehouses successfully', 200);
   }

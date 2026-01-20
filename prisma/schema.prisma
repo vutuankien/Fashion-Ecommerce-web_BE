@@ -22,6 +22,11 @@ enum Role{
   employer
 }
 
+enum InventoryStatus {
+  ACTIVE
+  DISABLED
+}
+
 
 enum Level{
   normal
@@ -47,6 +52,8 @@ model User {
 
   //khai báo 2 chiều
   passwordResetTokens PasswordResetToken[]
+  shop shop?
+  employer Employer?
 }
 
 model Author {
@@ -89,16 +96,7 @@ model PasswordResetToken {
 }
 
 
-model Inventory {
-  id        Int      @id @default(autoincrement())
-  name      String
-  quantity  Int
-  address   String?
-  phone     String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+
 
 
 model provinces {
@@ -163,6 +161,9 @@ model Warehouse {
 
   // Quan hệ ngược với products
   products products[]
+
+  /** Quan hệ ngược với inventories */
+  inventories Inventory[]
 }
 
 
@@ -252,41 +253,48 @@ model products {
   tags               tags[]
   categories         categories[]
   shops              shop[]
-  
+  inventories        Inventory[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 }
 
 model shop {
   id    String  @id @default(cuid())
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+  email String @unique @default("shop@gmail.com")
   name  String
-  phone String
-  typeProvider String
+  phone String?
+  typeProvider String?
   desc String?
-  avatar_url String
+  avatar_url String?
   bank String? // ngân hàng nào
   bank_account String? //chủ tài khoản
   bank_number String? // số tài khoản
+  password String?
+  refresh_token String?
 
 
-  address String //full địa chỉ
+  address String? //full địa chỉ
 
-  province_id String
-  district_id String
-  commune_id String
+  province_id String?
+  district_id String?
+  commune_id String?
 
 
   /** Quan hệ với bảng province */
-  province provinces @relation("ShopProvince", fields: [province_id], references: [id], onDelete: Restrict)  
+  province provinces? @relation("ShopProvince", fields: [province_id], references: [id], onDelete: Restrict)  
   /** Quan hệ với bảng district */
-  district districts @relation("ShopDistrict", fields: [district_id], references: [id], onDelete: Restrict)
+  district districts? @relation("ShopDistrict", fields: [district_id], references: [id], onDelete: Restrict)
   /** Quan hệ với bảng commune */
-  commune  communes  @relation("ShopCommune", fields: [commune_id],  references: [id], onDelete: Restrict)
+  commune  communes?  @relation("ShopCommune", fields: [commune_id],  references: [id], onDelete: Restrict)
   
   // Quan hệ ngược với products
   products products[]
   //Quan hệ ngược với employer
   employer Employer[]
+  //Quan hệ ngược với inventory
+  inventory Inventory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -294,11 +302,13 @@ model shop {
 
 model Employer {
   id        String      @id @default(cuid())
-  email     String   @unique
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+  email     String   @unique @default("employer@gmail.com")
   name      String?
   age       Int?
   address   String?
-  password  String
+  password  String @default("employer")
   refresh_token String?
   phone     String?
   salary     Int?
@@ -309,4 +319,36 @@ model Employer {
   shop shop @relation(fields: [shop_id], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Inventory {
+  id               String    @id @default(cuid())
+
+  /** Quan hệ ngược với products */
+  productId        String
+  /** Quan hệ ngược với warehouse */
+  warehouseId      String
+  /** Quan hệ ngược với shop */
+  shopId String
+
+  /** Tồn kho thực */
+  quantity         Int       
+  /** Tồn kho đã đặt */
+  reservedQuantity Int       @default(0)
+
+  /** Trạng thái */
+  status           InventoryStatus @default(ACTIVE)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  /** Quan hệ ngược với products */
+  product          products   @relation(fields: [productId], references: [id])
+  /** Quan hệ ngược với warehouse */
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id])
+  /** Quan hệ ngược với shop */
+  shop shop @relation(fields: [shopId], references: [id])
+
+  @@unique([shopId, warehouseId, productId])
+
 }

@@ -29,32 +29,64 @@ export class WarehouseService {
   }
 
 
-  async findAll(limit :number = 10, page : number = 1) {
-    /**Xử lý phân trang */
+  async findAll(query?: { 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    sortBy?: string; 
+    sortOrder?: 'asc' | 'desc';
+    province_id?: string;
+    district_id?: string;
+    allow_create_order?: boolean;
+  }) {
+    /** Destructure và set default values */
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      province_id,
+      district_id,
+      allow_create_order
+    } = query || {};
 
-    /**Lấy giá trị trang và giới hạn */
+    /** Validate và normalize */
     const PAGE_VAL = Math.max(page, 1);
-    const LIMIT_VAL = Math.max(limit, 1);
-
-    /**Tính toán số bản ghi cần bỏ qua */
+    const LIMIT_VAL = Math.max(Math.min(limit, 100), 1);
     const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
 
-    /**Sử dụng Promise.all để thực hiện đồng thời hai truy vấn */
-    const [DATA,TOTAL] = await Promise.all ([
-      this.warehouseRepository.findMany(LIMIT_VAL, SKIP),
-      this.warehouseRepository.count()
-    ])
+    /** Build where clause */
+    const where: Record<string, unknown> = {};
 
+    /** Search conditions - tìm kiếm theo name, address, phone */
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
+      ];
+    }
 
-    /**Trả về dữ liệu phân trang */
+    /** Filter conditions */
+    if (province_id) where.province_id = province_id;
+    if (district_id) where.district_id = district_id;
+    if (allow_create_order !== undefined) where.allow_create_order = allow_create_order;
+
+    /** Sử dụng Promise.all để thực hiện đồng thời hai truy vấn */
+    const [DATA, TOTAL] = await Promise.all([
+      this.warehouseRepository.findManyWithFilters(LIMIT_VAL, SKIP, where, sortBy, sortOrder),
+      this.warehouseRepository.countWithFilters(where)
+    ]);
+
+    /** Trả về dữ liệu phân trang */
     return {
       data: DATA,
       total: TOTAL,
       page: PAGE_VAL,
       limit: LIMIT_VAL,
-      /**Tổng số trang */
-      totalPages: Math.ceil(TOTAL / LIMIT_VAL)
-    }
+      totalPage: Math.ceil(TOTAL / LIMIT_VAL)
+    };
   }
 
   /**Hàm tìm kiếm warehouse theo id */

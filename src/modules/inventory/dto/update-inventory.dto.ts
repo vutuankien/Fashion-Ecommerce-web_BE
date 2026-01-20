@@ -1,4 +1,13 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateInventoryDto } from './create-inventory.dto';
+import { CreateInventoryDto, InventoryStatus } from './create-inventory.dto';
 
-export class UpdateInventoryDto extends PartialType(CreateInventoryDto) {}
+export class UpdateInventoryDto {
+    
+    /** số lượng */
+    quantity: number;
+
+    /** số lượng */
+    review_quantity: number;
+    /** trạng thái */
+    status: InventoryStatus;
+}

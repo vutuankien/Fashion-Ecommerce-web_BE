@@ -1,9 +1,14 @@
-import { IsEmail, IsNumber, IsOptional, IsString, IsUUID, Matches, Min } from "class-validator";
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Matches, Min } from "class-validator";
 import { Employer } from "../entities/employer.entity";
 
 
 /** DTO tạo mới nhân viên */
 export class CreateEmployerDto implements Employer {
+    /** ID của User liên kết với nhân viên */
+    @IsNumber()
+    @IsNotEmpty()
+    userId: number;
+
     /** id của nhân viên */
     @IsUUID()
     @IsOptional()

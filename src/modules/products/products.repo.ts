@@ -184,6 +184,16 @@ export class ProductsRepo {
         return PRODUCT;
     }
 
+    /** Đếm số lượng products theo where clause */
+    async count(where?: Record<string, unknown>) {
+        return this.prismaService.products.count({ where });
+    }
+
+    /** Tìm nhiều products với options */
+    async findMany(options: { where?: Record<string, unknown>; take?: number; skip?: number; orderBy?: Record<string, string> }) {
+        return this.prismaService.products.findMany(options);
+    }
+
     
 
     async dynamic_search(

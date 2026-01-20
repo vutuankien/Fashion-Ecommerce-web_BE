@@ -1,5 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ElasticsearchService } from "@nestjs/elasticsearch";
+/** Import ProductSearchCache */
+import { ProductSearchCache } from "./product-search.cache";
 
 //#region ____ ProductSearch ____
 // -----------------------------------------------------------------------------
@@ -41,6 +43,8 @@ export class ProductSearchService implements IProductSearchService {
 
   constructor(
     private readonly ES_SERVICE: ElasticsearchService,
+    /** Inject ProductSearchCache */
+    private readonly PRODUCT_SEARCH_CACHE: ProductSearchCache
   ) { }
 
   /**
@@ -92,14 +96,22 @@ export class ProductSearchService implements IProductSearchService {
    * @returns {Promise<Partial<IProductItem>[]>} Danh sách sản phẩm
    */
   async search(keyword: string, filters?: ISearchFilters): Promise<Partial<IProductItem>[]> {
-    /**Xây dựng điều kiện lọc */
+    /** Kiểm tra cache trước */
+    const cached_results = await this.PRODUCT_SEARCH_CACHE.getSearchResults(keyword, filters);
+    
+    /** Nếu có cache thì trả về luôn */
+    if (cached_results) {
+      return cached_results;
+    }
+
+    /** Xây dựng điều kiện lọc */
     const filter_conditions = [
       filters?.brand ? { term: { brand: filters.brand } } : undefined,
       filters?.category ? { term: { category: filters.category } } : undefined,
       filters?.minPrice ? { range: { price: { gte: filters.minPrice } } } : undefined,
     ].filter((item): item is Exclude<typeof item, undefined> => item !== undefined);
 
-    /**Thực hiện truy vấn search */
+    /** Thực hiện truy vấn search */
     const result = await this.ES_SERVICE.search({
       index: this.INDEX_NAME,
       query: {
@@ -120,8 +132,13 @@ export class ProductSearchService implements IProductSearchService {
       ],
     });
 
-    /**Map kết quả trả về */
-    return result.hits.hits.map(hit => hit._source as Partial<IProductItem>);
+    /** Map kết quả trả về */
+    const results = result.hits.hits.map(hit => hit._source as Partial<IProductItem>);
+
+    /** Lưu kết quả vào cache */
+    await this.PRODUCT_SEARCH_CACHE.setSearchResults(keyword, filters, results);
+
+    return results;
   }
 }
 // -----------------------------------------------------------------------------

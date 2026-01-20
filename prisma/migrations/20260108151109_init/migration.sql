@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "shop" ALTER COLUMN "phone" DROP NOT NULL,
+ALTER COLUMN "typeProvider" DROP NOT NULL,
+ALTER COLUMN "avatar_url" DROP NOT NULL,
+ALTER COLUMN "province_id" DROP NOT NULL,
+ALTER COLUMN "district_id" DROP NOT NULL,
+ALTER COLUMN "commune_id" DROP NOT NULL;

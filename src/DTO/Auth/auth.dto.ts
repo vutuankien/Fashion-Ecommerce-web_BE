@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { UserRole } from '../User/user.dto';
 
 
@@ -20,8 +20,14 @@ export class IRegisterDto {
     password: string;
 
     /**Phân quyền người dùng */
+    @IsOptional()
     @IsEnum(UserRole)
     role?: UserRole
+
+    /**ID của cửa hàng (bắt buộc nếu role là employer) */
+    @IsOptional()
+    @IsString()
+    shop_id?: string;
 }
 
 /**Giao diện dữ liệu đăng nhập */

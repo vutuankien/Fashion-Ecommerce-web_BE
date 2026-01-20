@@ -1,5 +1,5 @@
 /** Import các decorator từ NestJS */
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query } from '@nestjs/common';
 /** Import TagsService để xử lý nghiệp vụ thẻ tag */
 import { TagsService } from './tags.service';
 /** Import CreateTagDto để định nghĩa dữ liệu tạo mới */
@@ -47,11 +47,22 @@ export class TagsController {
   /** Controller lấy toàn bộ tag */
   @Get()
   /** Hàm xử lý lấy danh sách */
-  async findAll() {
+  async findAll(
+    /** Nhận page từ query */
+    @Query('page') page?: number,
+    /** Nhận limit từ query */
+    @Query('limit') limit?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
     /** Khối try để bắt lỗi */
     try {
       /** Lấy danh sách tag qua service */
-      const DATA = await this.TAGS_SERVICE.getTags();
+      const DATA = await this.TAGS_SERVICE.getTags({ page, limit, search, sortBy, sortOrder });
       /** Trả về kết quả thành công */
       return ResponseHelper.Success(DATA, 'Lấy danh sách tag thành công', 200);
     } /** Khối catch để xử lý lỗi */ catch (error) {

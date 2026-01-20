@@ -77,9 +77,11 @@ export class EmployerService {
           }
     
           /** Kiểm tra shop_id */
-          const { shop_id, password, ...rest } = create_employer_dto;
+          const { shop_id, password, userId, ...rest } = create_employer_dto;
           /** ném lỗi nếu không có shop_id */
           if (!shop_id) throw new BadRequestException('Shop ID is required');
+          /** ném lỗi nếu không có userId */
+          if (!userId) throw new BadRequestException('User ID is required');
 
           /** Tạo nhân viên mới trong database */
           const EMPLOYER = await this.PRISMA_SERVICE.employer.create({
@@ -91,6 +93,8 @@ export class EmployerService {
               avatar_url: avatar_url || create_employer_dto.avatar_url || '',
               /** gán shop_id */
               shop_id: shop_id,
+              /** gán userId */
+              userId: userId,
             },
           });
           /** Trả về thông tin nhân viên */
@@ -104,41 +108,80 @@ export class EmployerService {
       }
 
     /**
-     * lấy danh sách tất cả nhân viên
-     * @param limit giới hạn số lượng
-     * @param page trang hiện tại
+     * lấy danh sách tất cả nhân viên với pagination, search, sort, filters
+     * @param query query parameters
      * @returns danh sách nhân viên và phân trang
      */
-    async findAll(limit:number, page:number) {
-        /**Xử lý pagination */
-        /**Giá trị mặc định là 1 */
-        const PAGE_VAL = Math.max(1, page);
-        /**Giá trị mặc định là 10 */
-        const LIMIT_VAL = Math.max(1, limit);
-        /**Bỏ qua số lượng bản ghi */
-        const SKIP = (PAGE_VAL - 1) * LIMIT_VAL;
+    async findAll(query?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      shop_id?: string;
+      minSalary?: number;
+      maxSalary?: number;
+    }) {
+      /** Destructure và set default values */
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        shop_id,
+        minSalary,
+        maxSalary
+      } = query || {};
 
-        /**Chạy song song để nhanh hơn */
-        const [data, total] = await Promise.all([
-            /** lấy danh sách nhân viên từ db */
-            this.PRISMA_SERVICE.employer.findMany({
-                take: LIMIT_VAL,
-                skip: SKIP,
-                /**Sắp xếp theo id tăng dần */
-                orderBy: { id: 'asc' }
-            }),
-            /**Lấy tổng số nhân viên */
-            this.PRISMA_SERVICE.employer.count()
-        ]);
+      /** Validate và normalize */
+      const MAX_LIMIT = Math.max(1, Math.min(limit, 100));
+      const CURRENT_PAGE = Math.max(page, 1);
+      const OFFSET = (CURRENT_PAGE - 1) * MAX_LIMIT;
 
-        /**Trả về response thành công */
-        return {
-            data,
-            total,
-            page: PAGE_VAL,
-            limit: LIMIT_VAL,
-            totalPages: Math.ceil(total / LIMIT_VAL)
-        };
+      /** Build where clause */
+      const where: Record<string, unknown> = {};
+
+      /** Search conditions - tìm kiếm theo name, email, phone */
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } }
+        ];
+      }
+
+      /** Filter conditions */
+      if (shop_id) where.shop_id = shop_id;
+
+      /** Salary range filter */
+      if (minSalary !== undefined || maxSalary !== undefined) {
+        const salary_filter: Record<string, number> = {};
+        if (minSalary !== undefined) salary_filter.gte = minSalary;
+        if (maxSalary !== undefined) salary_filter.lte = maxSalary;
+        where.salary = salary_filter;
+      }
+
+      /** Đếm tổng số records */
+      const TOTAL = await this.PRISMA_SERVICE.employer.count({ where });
+      const TOTAL_PAGE = Math.max(1, Math.ceil(TOTAL / MAX_LIMIT));
+
+      /** Lấy danh sách từ DB */
+      const DATA = await this.PRISMA_SERVICE.employer.findMany({
+        where,
+        take: MAX_LIMIT,
+        skip: OFFSET,
+        orderBy: { [sortBy]: sortOrder }
+      });
+
+      /** Trả về với pagination info */
+      return {
+        data: DATA,
+        total: TOTAL,
+        page: CURRENT_PAGE,
+        limit: MAX_LIMIT,
+        totalPage: TOTAL_PAGE
+      };
     }
 
     /**

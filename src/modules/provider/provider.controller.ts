@@ -1,5 +1,5 @@
 /** Import các decorator từ NestJS */
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 /** Import ProviderService để xử lý nghiệp vụ nhà cung cấp */
 import { ProviderService } from './provider.service';
 /** Import CreateProviderDto để định nghĩa dữ liệu tạo mới */
@@ -36,11 +36,26 @@ export class ProviderController {
   /** Controller lấy danh sách provider */
   @Get()
   /** Hàm xử lý lấy danh sách */
-  async findAll() {
+  async findAll(
+    /** Nhận page từ query */
+    @Query('page') page?: number,
+    /** Nhận limit từ query */
+    @Query('limit') limit?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    /** Nhận typeProvider từ query */
+    @Query('typeProvider') typeProvider?: string,
+    /** Nhận province_id từ query */
+    @Query('province_id') province_id?: string
+  ) {
     /** Khối try để bắt lỗi */
     try {
       /** Lấy toàn bộ danh sách qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.findAll();
+      const RESPONSE = await this.PROVIDER_SERVICE.findAll({ page, limit, search, sortBy, sortOrder, typeProvider, province_id });
 
       /** Trả về kết quả thành công */
       return ResponseHelper.Success(RESPONSE,"Get provider successfully",200);

@@ -37,15 +37,34 @@ export class EmployerController {
 
   /**
    * lấy danh sách nhân viên
-   * @param limit 
-   * @param page 
+   * @param query parameters
    * @returns 
    */
   @Get()
   @Roles("admin")
-  async findAll(@Query('limit') limit:number, @Query('page') page:number) {
+  async findAll(
+    /** Nhận page từ query */
+    @Query('page') page?: number,
+    /** Nhận limit từ query */
+    @Query('limit') limit?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    /** Nhận shop_id từ query */
+    @Query('shop_id') shop_id?: string,
+    /** Nhận minSalary từ query */
+    @Query('minSalary') minSalary?: number,
+    /** Nhận maxSalary từ query */
+    @Query('maxSalary') maxSalary?: number
+  ) {
     /** gọi service lấy danh sách */
-    const DATA = await this.EMPLOYER_SERVICE.findAll(limit, page);
+    const DATA = await this.EMPLOYER_SERVICE.findAll({ 
+      page, limit, search, sortBy, sortOrder, 
+      shop_id, minSalary, maxSalary 
+    });
     /** trả về phản hồi thành công */
     return ResponseHelper.Success(DATA,"Get all employer successfully",200);
   }

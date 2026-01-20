@@ -18,7 +18,7 @@ import { ShopModule } from './modules/shop/shop.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmployerModule } from './modules/employer/employer.module';
-import { ElasticsearchModule } from '@nestjs/elasticsearch';
+
 import { ProductSearchModule } from './modules/product-search/product-search.module';
 
 @Module({
@@ -39,9 +39,6 @@ import { ProductSearchModule } from './modules/product-search/product-search.mod
     PrismaModule,
     CloudinaryModule,
     EmployerModule,
-    ElasticsearchModule.register({
-      node: 'http://localhost:9200',
-    }),
     ProductSearchModule,
   ],
   controllers: [AppController],

@@ -19,7 +19,39 @@ export class ProductsController {
     return ResponseHelper.Success(NEW_PRODUCT, 'Tạo sản phẩm thành công', 200)
   }
 
-  
+  /** Controller lấy danh sách sản phẩm */
+  @Get()
+  @Roles("admin", "user")
+  async findAll(
+    /** Nhận page từ query */
+    @Query('page') page?: number,
+    /** Nhận limit từ query */
+    @Query('limit') limit?: number,
+    /** Nhận search từ query */
+    @Query('search') search?: string,
+    /** Nhận sortBy từ query */
+    @Query('sortBy') sortBy?: string,
+    /** Nhận sortOrder từ query */
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    /** Nhận minPrice từ query */
+    @Query('minPrice') minPrice?: number,
+    /** Nhận maxPrice từ query */
+    @Query('maxPrice') maxPrice?: number,
+    /** Nhận brand từ query */
+    @Query('brand') brand?: string,
+    /** Nhận type từ query */
+    @Query('type') type?: string,
+    /** Nhận is_published từ query */
+    @Query('is_published') is_published?: boolean,
+    /** Nhận warehouse_id từ query */
+    @Query('warehouse_id') warehouse_id?: string
+  ) {
+    const DATA = await this.productsService.findAll({ 
+      page, limit, search, sortBy, sortOrder,
+      minPrice, maxPrice, brand, type, is_published, warehouse_id
+    });
+    return ResponseHelper.Success(DATA, 'Lấy danh sách sản phẩm thành công', 200);
+  }
   @Get(':id')
   @Roles("admin", "user")
   async findOne(@Param('id') id: string) {

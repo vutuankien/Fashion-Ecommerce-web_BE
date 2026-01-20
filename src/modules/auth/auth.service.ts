@@ -1,4 +1,5 @@
 import { TokenService } from './token.service';
+import { Prisma } from '@prisma/client';
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ILoginDto, IRefreshTokenDto, IRegisterDto, IForgotPasswordDto, IResetPasswordDto } from 'src/DTO/Auth/auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,36 +23,71 @@ export class AuthService {
      * @param register_dto - Thông tin đăng ký
      */
     async Register(register_dto: IRegisterDto) {
-        /**Kiểm tra thông tin đăng ký */
-        if (!register_dto.email || !register_dto.password || !register_dto.name)
-            throw new ConflictException('Missing required fields');
+        const { email, name, password, role, shop_id } = register_dto;
 
-        /**Mã hóa mật khẩu sử dụng bcrypt */
-        const HASHED_PASSWORD = await PasswordService.HashPassword(register_dto.password);
+        /** Kiểm tra shop_id nếu role là employer */
+        if (role === 'employer' && !shop_id) {
+            throw new BadRequestException('shop_id is required for employer registration');
+        }
 
-        /**Kiểm tra User đã tồn tại hay chưa */
-        const EXISTING_USER = await this.user_cache.checkExistsByEmail(register_dto.email);
+        /** Kiểm tra user đã tồn tại */
+        const EXISTING_USER = await this.user_cache.checkExistsByEmail(email);
+        if (EXISTING_USER) {
+            throw new ConflictException('User already exists');
+        }
 
+        /** Hash password */
+        const HASHED_PASSWORD = await PasswordService.HashPassword(password);
 
-        /**Nếu user đã tồn tại thì ném lỗi */
-        if (EXISTING_USER) throw new ConflictException('User already exists');
+        /** Transaction */
+        const RESULT = await this.prisma.$transaction(async (tx) => {
+            /** Tạo user */
+            const NEW_USER = await tx.user.create({
+                data: {
+                    email,
+                    name,
+                    password: HASHED_PASSWORD,
+                    provider: 'email',
+                    role: role || 'user',
+                },
+            });
 
-        /**Tạo user mới trong database */
-        const NEW_USER = await this.prisma.user.create({
-            data: {
-                email: register_dto.email,
-                name: register_dto.name,
-                password: HASHED_PASSWORD,
-                provider: 'email',
-                role : register_dto.role || 'user',
-            },
+            /** Nếu là shop thì tạo thêm shop */
+            if (role === 'shop') {
+                await tx.shop.create({
+                    data: {
+                        email,
+                        name,
+                        password: HASHED_PASSWORD,
+                        userId: NEW_USER.id
+                    },
+                });
+            }
+
+            /** Nếu là employer thì tạo thêm employer */
+            if (role === 'employer') {
+                /** Kiểm tra shop_id có tồn tại không */
+                if(!shop_id) throw new BadRequestException('shop_id is required');
+                await tx.employer.create({
+                    data: {
+                        email,
+                        name,
+                        password: HASHED_PASSWORD,
+                        userId: NEW_USER.id,
+                        shop_id
+                    },
+                });
+            }
+
+            return NEW_USER;
         });
 
-        await this.user_cache.set(NEW_USER);
+        /** Cache user */
+        await this.user_cache.set(RESULT);
 
-        /**Trả về thông tin user mới */
-        return { NEW_USER };
+        return { NEW_USER: RESULT };
     }
+
 
 
     /**
@@ -99,16 +135,33 @@ export class AuthService {
             role: user.role,
         });
 
-        /** Cập nhật refresh token đã mã hóa vào database */
-        await this.prisma.user.update({
-            /** Điều kiện cập nhật theo user id */
-            where: { id: user.id },
-            /** Dữ liệu cần cập nhật */
-            data: {
-                /** Mã hóa refresh token trước khi lưu */
-                refresh_token: await PasswordService.HashPassword(refreshToken),
-            },
-        });
+        /** Mã hóa refresh token trước khi lưu */
+        const hashedRefreshToken = await PasswordService.HashPassword(refreshToken);
+
+        /** Cập nhật refresh token vào database theo role */
+        switch (user.role) {
+            case 'shop':
+                /** Cập nhật refresh token cho shop */
+                await this.prisma.shop.update({
+                    where: { userId: user.id },
+                    data: { refresh_token: hashedRefreshToken },
+                });
+                break;
+            case 'employer':
+                /** Cập nhật refresh token cho employer */
+                await this.prisma.employer.update({
+                    where: { userId: user.id },
+                    data: { refresh_token: hashedRefreshToken },
+                });
+                break;
+            default:
+                /** Cập nhật refresh token cho user thường (user, admin, author) */
+                await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { refresh_token: hashedRefreshToken },
+                });
+                break;
+        }
 
         /** Trả về access token và refresh token */
         return {
