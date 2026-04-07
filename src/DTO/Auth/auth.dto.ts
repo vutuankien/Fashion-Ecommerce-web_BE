@@ -40,6 +40,13 @@ export class ILoginDto {
     /**Mật khẩu người dùng */
     @IsString()
     password: string;
+
+    @IsOptional()
+    @IsString()
+    clerk_token?: string;
+
+    @IsOptional()
+    role?: UserRole;
 }
 
 /**Giao diện dữ liệu refresh token */

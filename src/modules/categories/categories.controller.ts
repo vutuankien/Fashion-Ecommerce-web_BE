@@ -26,6 +26,7 @@ export class CategoriesController {
     /** Nhận dữ liệu từ request body */
     @Body() create_category_dto: CreateCategoryDto
   ) {
+    /** Gọi service để tạo mới category */
     const DATA = await this.CATEGORIES_SERVICE.create(create_category_dto);
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Create category successfully', 201);
@@ -46,7 +47,7 @@ export class CategoriesController {
     /** Nhận sortOrder từ query */
     @Query('sortOrder') sortOrder?: 'asc' | 'desc'
   ) {
-    /** Khối try để bắt lỗi */
+    /** Gọi service lấy danh sách category với phân trang và tìm kiếm */
     const DATA = await this.CATEGORIES_SERVICE.findAll({ page, limit, search, sortBy, sortOrder });
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Get all categories successfully', 200);
@@ -59,7 +60,7 @@ export class CategoriesController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
+    /** Gọi service lấy thông tin chi tiết của một category */
     const DATA = await this.CATEGORIES_SERVICE.findOne(id);
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Get category successfully', 200);
@@ -74,7 +75,7 @@ export class CategoriesController {
     /** Nhận dữ liệu cập nhật từ body */
     @Body() update_category_dto: UpdateCategoryDto
   ) {
-    /** Khối try để bắt lỗi */
+    /** Gọi service cập nhật thông tin category */
     const DATA = await this.CATEGORIES_SERVICE.update(id, update_category_dto);
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Update category successfully', 200);
@@ -87,7 +88,7 @@ export class CategoriesController {
     /** Nhận id từ param */
     @Param('id') id: string
   ) {
-    /** Khối try để bắt lỗi */
+    /** Gọi service thực hiện xóa category */
     const DATA = await this.CATEGORIES_SERVICE.remove(id);
     /** Trả về kết quả thành công */
     return ResponseHelper.Success(DATA, 'Delete category successfully', 200);

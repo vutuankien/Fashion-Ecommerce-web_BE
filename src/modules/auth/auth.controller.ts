@@ -67,7 +67,22 @@ export class AuthController {
         const LOGIN_RESPONSE = await this.AUTH_SERVICE.Login(login_dto);
 
         /** Trả về Response gọi từ Response Helper */
+        /** Trả về Response gọi từ Response Helper */
         return ResponseHelper.Success(LOGIN_RESPONSE, 'User logged in successfully', 200);
+    }
+
+    /**
+     * Đăng nhập bằng Clerk
+     * @param token - Token từ Clerk
+     */
+    @Post('login-clerk')
+    async loginWithClerk(@Body('token') token: string) {
+        if (!token) {
+            return ResponseHelper.Error('Token is required', 400);
+        }
+
+        const LOGIN_RESPONSE = await this.AUTH_SERVICE.loginWithClerk(token);
+        return ResponseHelper.Success(LOGIN_RESPONSE, 'User logged in with Clerk successfully', 200);
     }
 
     /** Endpoint làm mới token */

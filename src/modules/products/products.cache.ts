@@ -12,17 +12,21 @@ import { Injectable } from "@nestjs/common";
 /** Định nghĩa các hành động với bộ nhớ đệm cho sản phẩm */
 export interface IProductCache {
     /** Lấy sản phẩm từ cache hoặc DB theo id */
-    get(id: string): Promise<IProduct | null>;
+    Get(id: string): Promise<IProduct | null>;
     /** Lưu sản phẩm vào cache */
-    set(product: IProduct): Promise<void>;
+    Set(product: IProduct): Promise<void>;
     /** Xóa sản phẩm khỏi cache */
-    delete(id: string): Promise<void>;
+    Delete(id: string): Promise<void>;
     /** Kiểm tra sự tồn tại của sản phẩm theo id */
-    checkExists(id: string): Promise<boolean>;
+    CheckExists(id: string): Promise<boolean>;
     /** Lấy tất cả sản phẩm từ cache */
-    getAll(): Promise<IProduct[]>;
+    GetAll(): Promise<IProduct[]>;
     /** Lưu nhiều sản phẩm vào cache */
-    setAll(products: IProduct[]): Promise<void>;
+    SetAll(products: IProduct[]): Promise<void>;
+    /** Lấy tất cả sản phẩm của một shop từ cache */
+    GetAllByShopId(shop_id: string): Promise<IProduct[]>;
+    /** Xóa cache tất cả sản phẩm của một shop */
+    DeleteByShop(shop_id: string): Promise<void>;
 }
 //#endregion
 
@@ -32,8 +36,10 @@ export interface IProductCache {
 export class ProductsCache implements IProductCache {
     /** Thời gian sống mặc định của cache là 1 giờ */
     private readonly TTL = 3600;
-    /** Tiền tố cho các khóa sản phẩm trong Redis */
-    private readonly PREFIX = 'product:';
+    /** Tiền tố cho các khóa sản phẩm đơn lẻ trong Redis */
+    private readonly PRODUCT_PREFIX = 'product:';
+    /** Tiền tố cho các khóa danh sách sản phẩm theo shop trong Redis */
+    private readonly SHOP_PRODUCTS_PREFIX = 'shop_products:';
 
     /** Hàm khởi tạo với các phụ thuộc cần thiết */
     constructor(
@@ -42,33 +48,76 @@ export class ProductsCache implements IProductCache {
         /** Kho lưu trữ sản phẩm để truy vấn khi không có trong cache */
         private readonly REPO: ProductsRepo = new ProductsRepo(new PrismaService())
     ) {}
-
-    /** Phương thức lấy thông tin sản phẩm hỗ trợ cơ chế cache-aside */
-    async get(id: string): Promise<IProduct | null> {
+    /** Phương thức lấy tất cả sản phẩm của shop từ cache */
+    async GetAllByShopId(shop_id: string): Promise<IProduct[]> {
         try {
-            /** Khởi tạo hoặc lấy kết nối Redis server */
+            /** Lấy đối tượng điều khiển Redis */
             const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
-            /** Tạo hằng số định danh khóa cache */
-            const KEY = `${this.PREFIX}${id}`;
-            
+            /** Tạo khóa danh sách sản phẩm của shop */
+            const KEY = `${this.SHOP_PRODUCTS_PREFIX}${shop_id}`;
             /** Truy vấn dữ liệu từ Redis */
             const DATA = await REDIS_CLIENT.get(KEY);
+            /** Nếu có dữ liệu trong cache thì trả về luôn */
+            if (DATA) return JSON.parse(DATA) as IProduct[];
+            /** Nếu cache miss, lấy từ DB thông qua Repo */
+            const PRODUCTS = await this.REPO.findMany({
+                where: { shop_id }
+            });
+            /** Lưu danh sách vào cache cho lần lấy sau */
+            await this.SetShopProducts(shop_id, PRODUCTS);
+            /** Trả về danh sách sản phẩm */
+            return PRODUCTS;
+        } catch (error) {
+            /** Ném lỗi lên lớp Service */
+            throw error;
+        }
+    }
 
-            /** Kiểm tra nếu dữ liệu tồn tại trong cache */
-            if (DATA) {
-                /** Giải mã chuỗi JSON thành đối tượng sản phẩm */
-                return JSON.parse(DATA) as IProduct;
-            }
+    /** Phương thức lưu danh sách sản phẩm của shop vào Redis */
+    private async SetShopProducts(shop_id: string, products: IProduct[]): Promise<void> {
+        try {
+            /** Lấy đối tượng điều khiển Redis */
+            const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
+            /** Tạo khóa danh sách sản phẩm của shop */
+            const KEY = `${this.SHOP_PRODUCTS_PREFIX}${shop_id}`;
+            /** Lưu vào Redis với thời gian hết hạn */
+            await REDIS_CLIENT.set(KEY, JSON.stringify(products), 'EX', this.TTL);
+        } catch (error) {
+            /** Ghi nhận lỗi lưu cache */
+            console.error('Lỗi khi lưu Shop Products Cache:', error);
+        }
+    }
 
+    /** Phương thức xóa cache danh sách sản phẩm của một shop */
+    async DeleteByShop(shop_id: string): Promise<void> {
+        try {
+            /** Lấy đối tượng điều khiển Redis */
+            const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
+            /** Tạo khóa cần xóa */
+            const KEY = `${this.SHOP_PRODUCTS_PREFIX}${shop_id}`;
+            /** Thực hiện xóa khóa */
+            await REDIS_CLIENT.del(KEY);
+        } catch (error) {
+            /** Ghi nhận lỗi xóa cache */
+            console.error('Lỗi khi xóa Shop Products Cache:', error);
+        }
+    }
+
+    /** Phương thức lấy thông tin sản phẩm hỗ trợ cơ chế cache-aside */
+    async Get(id: string): Promise<IProduct | null> {
+        try {
+            /** Lấy đối tượng điều khiển Redis */
+            const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
+            /** Tạo hằng số định danh khóa cache */
+            const KEY = `${this.PRODUCT_PREFIX}${id}`;
+            /** Truy vấn dữ liệu từ Redis */
+            const DATA = await REDIS_CLIENT.get(KEY);
+            /** Kiểm tra nếu dữ liệu tồn tại trong cache thì trả về */
+            if (DATA) return JSON.parse(DATA) as IProduct;
             /** Nếu cache miss, thực hiện tìm kiếm trong cơ sở dữ liệu qua Repo */
             const PRODUCT = await this.REPO.findOne(id);
-
-            /** Nếu tìm thấy sản phẩm trong DB */
-            if (PRODUCT) {
-                /** Lưu lại vào cache để phục vụ các lần truy vấn sau */
-                await this.set(PRODUCT);
-            }
-
+            /** Nếu tìm thấy sản phẩm trong DB thì lưu vào cache */
+            if (PRODUCT) await this.Set(PRODUCT);
             /** Trả về kết quả cuối cùng */
             return PRODUCT;
         } catch (error) {
@@ -78,27 +127,29 @@ export class ProductsCache implements IProductCache {
     }
 
     /** Phương thức lưu trữ đối tượng sản phẩm vào Redis */
-    async set(product: IProduct): Promise<void> {
+    async Set(product: IProduct): Promise<void> {
         try {
             /** Lấy đối tượng điều khiển Redis */
             const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
             /** Tạo khóa lưu trữ dựa trên id */
-            const KEY = `${this.PREFIX}${product.id}`;
+            const KEY = `${this.PRODUCT_PREFIX}${product.id}`;
             /** Thực hiện lưu chuỗi JSON với thời gian hết hạn */
             await REDIS_CLIENT.set(KEY, JSON.stringify(product), 'EX', this.TTL);
+            /** Khi cập nhật sản phẩm, xóa cache danh sách của shop chứa sản phẩm đó */
+            await this.DeleteByShop(product.shop_id);
         } catch (error) {
-            /** Ghi nhận lỗi nhưng không làm gián đoạn luồng chính */
+            /** Ghi nhận lỗi lưu cache */
             console.error('Lỗi khi lưu Product Cache:', error);
         }
     }
 
     /** Phương thức xóa thông tin sản phẩm khỏi bộ nhớ đệm */
-    async delete(id: string): Promise<void> {
+    async Delete(id: string): Promise<void> {
         try {
             /** Lấy đối tượng điều khiển Redis */
             const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
             /** Tạo khóa cần xóa */
-            const KEY = `${this.PREFIX}${id}`;
+            const KEY = `${this.PRODUCT_PREFIX}${id}`;
             /** Gọi lệnh xóa khóa khỏi Redis */
             await REDIS_CLIENT.del(KEY);
         } catch (error) {
@@ -108,13 +159,13 @@ export class ProductsCache implements IProductCache {
     }
 
     /** Phương thức kiểm tra sự tồn tại của sản phẩm theo id */
-    async checkExists(id: string): Promise<boolean> {
+    async CheckExists(id: string): Promise<boolean> {
         try {
             /** Lấy đối tượng điều khiển Redis */
             const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
             /** Tạo khóa kiểm tra */
-            const KEY = `${this.PREFIX}${id}`;
-            /** Trả về true nếu tồn tại, ngược lại false */
+            const KEY = `${this.PRODUCT_PREFIX}${id}`;
+            /** Trả về trạng thái tồn tại */
             return await REDIS_CLIENT.exists(KEY) > 0;
         } catch (error) {
             /** Ném lỗi ra lớp Service xử lý */
@@ -123,52 +174,44 @@ export class ProductsCache implements IProductCache {
     }
 
     /** Phương thức lấy tất cả sản phẩm từ cache */
-    async getAll(): Promise<IProduct[]> {
+    async GetAll(): Promise<IProduct[]> {
+        /** Lấy đối tượng điều khiển Redis */
         const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
-
-        // Dùng SCAN thay vì KEYS (không chặn Redis)
+        /** Danh sách khóa sản phẩm */
         const keys: string[] = [];
+        /** Con trỏ quét */
         let cursor = '0';
-
-        // Quét từng batch, không chặn Redis
+        /** Quét từng batch, không chặn Redis */
         do {
-            const [nextCursor, foundKeys] = await REDIS_CLIENT.scan(
-                cursor,
-                'MATCH',
-                `${this.PREFIX}*`,
-                'COUNT',
-                100  // Quét mỗi lần 100 keys
-            );
+            /** Thực hiện lệnh SCAN để tìm các khóa sản phẩm */
+            const [nextCursor, foundKeys] = await REDIS_CLIENT.scan(cursor, 'MATCH', `${this.PRODUCT_PREFIX}*`, 'COUNT', 100);
+            /** Cập nhật con trỏ tiếp theo */
             cursor = nextCursor;
+            /** Thêm các khóa tìm thấy vào danh sách */
             keys.push(...foundKeys);
         } while (cursor !== '0');
-
+        /** Nếu không có khóa nào thì trả về mảng rỗng */
         if (keys.length === 0) return [];
-
-        // Dùng MGET để lấy TẤT CẢ giá trị chỉ trong 1 lần gọi
+        /** Dùng MGET để lấy TẤT CẢ giá trị một lần */
         const values = await REDIS_CLIENT.mget(keys);
-
-        // Lọc và chuyển đổi dữ liệu
-        return values
-            .filter((data): data is string => data !== null)
-            .map(data => JSON.parse(data) as IProduct);
+        /** Lọc và chuyển đổi dữ liệu chuỗi sang đối tượng */
+        return values.filter((data): data is string => data !== null).map(data => JSON.parse(data) as IProduct);
     }
 
     /** Phương thức lưu nhiều sản phẩm vào cache */
-    async setAll(products: IProduct[]): Promise<void> {
-        /**Kết nối tới redis_client */
+    async SetAll(products: IProduct[]): Promise<void> {
+        /** Kết nối tới redis_client */
         const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
-        /**Sử dụng pipeline để tối ưu hoá việc set nhiều key */
+        /** Sử dụng pipeline để tối ưu hoá việc set nhiều key */
         const pipeline = REDIS_CLIENT.multi();
-
-        /**Lặp qua từng sản phẩm để thêm lệnh set vào pipeline */
+        /** Lặp qua từng sản phẩm để thêm lệnh set vào pipeline */
         for (const product of products) {
-            const key = `${this.PREFIX}${product.id}`;
+            /** Tạo khóa cho sản phẩm với tiền tố quy định */
+            const key = `${this.PRODUCT_PREFIX}${product.id}`;
             /** Thêm lệnh set vào pipeline với thời gian hết hạn */
             pipeline.set(key, JSON.stringify(product), 'EX', this.TTL);
         }
-
-        /**Thực thi tất cả lệnh trong pipeline */
+        /** Thực thi tất cả lệnh trong pipeline */
         await pipeline.exec();
     }
 }

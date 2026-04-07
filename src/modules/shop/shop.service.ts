@@ -6,6 +6,10 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import sharp from 'sharp';
 /** Import ShopCache */
 import { ShopCache } from './shop.cache';
+import { RedisConnection } from 'src/config/redis.config';
+
+
+const ONLINE_TTL = 90;//seconds
 
 /** Service quản lý cửa hàng */
 @Injectable()
@@ -14,6 +18,8 @@ export class ShopService {
   constructor(
     private readonly PRISMA_SERVICE: PrismaService,
     private readonly CLOUDINARY_SERVICE: CloudinaryService,
+    /** Inject RedisConnection */
+    private readonly REDIS_CONN: RedisConnection,
     /** Inject ShopCache */
     private readonly SHOP_CACHE: ShopCache
   ) {}
@@ -64,6 +70,8 @@ export class ShopService {
 
       /** Kiểm tra userId */
       if (!create_shop_dto.userId) throw new BadRequestException('User ID is required');
+      /** Tạo slug */
+      create_shop_dto.slug = create_shop_dto.name.toLowerCase().replace(/\s+/g, '-');
 
       /** Tạo cửa hàng mới trong database */
       const SHOP = await this.PRISMA_SERVICE.shop.create({
@@ -71,6 +79,7 @@ export class ShopService {
           ...create_shop_dto,
           avatar_url: avatar_url || create_shop_dto.avatar_url || '',
           userId: create_shop_dto.userId,
+          slug: create_shop_dto.slug,
         },
       });
       
@@ -119,7 +128,6 @@ export class ShopService {
         await this.SHOP_CACHE.setPage(CURRENT_PAGE, MAX_LIMIT, SHOP);
       }
 
-      console.info('[ShopService.FindAll] limit=', MAX_LIMIT, 'requestedPage=', page, 'currentPage=', CURRENT_PAGE, 'offset=', OFFSET, 'resultCount=', Array.isArray(SHOP) ? SHOP.length : 0, 'total=', TOTAL, 'totalPage=', TOTAL_PAGE);
 
       // Return paginated response with clamped page
       return {
@@ -280,5 +288,102 @@ export class ShopService {
     }
   }
 
-  
+  /** Lấy thông tin cửa hàng theo id sản phẩm */
+  async getShopByProductId(id: string) {
+    console.log('[getShopByProductId] Received product_id:', id);
+    
+    /** Tìm sản phẩm theo id */
+    const product = await this.PRISMA_SERVICE.products.findUnique({
+      where: { id },
+      select: { shop_id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("No Product Found");
+    }
+
+
+    /** Tìm cửa hàng theo id */
+    const shop = await this.PRISMA_SERVICE.shop.findUnique({
+      where: { id: product.shop_id },
+    });
+
+    /** Nếu không tìm thấy cửa hàng thì ném lỗi NotFound */
+    if (!shop) {
+      throw new NotFoundException("No Shop Found");
+    }
+
+    /** Trả về thông tin cửa hàng */
+    return shop
+  }
+
+  /** Lấy thông tin cửa hàng theo slug */
+  async getShopBySlug(slug: string) {
+    console.log('[getShopBySlug] Received slug:', slug);
+    
+    /** Tìm cửa hàng theo slug */
+    const shop = await this.PRISMA_SERVICE.shop.findUnique({
+      where: { slug: slug },
+    });
+
+    /** Nếu không tìm thấy cửa hàng thì ném lỗi NotFound */
+    if (!shop) {
+      throw new NotFoundException("No Shop Found");
+    }
+
+    /** Trả về thông tin cửa hàng */
+    return shop
+  }
+
+
+  /** Check heartbeat của cửa hàng */
+  async touchOnline(id: string) {
+    try {
+      /** Lấy Redis client từ connection */
+      const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
+      
+      /** Get timestamp hiện tại */
+      const now = Date.now();
+
+      /** Cập nhật last_seen_at của cửa hàng trong Redis */
+      await REDIS_CLIENT.multi()
+        .set(`shop:online:${id}`, '1', 'EX', ONLINE_TTL)
+        .set(`shop:last_seen:${id}`, now.toString())
+        .exec();
+
+      return { success: true };
+    } catch (error) {
+      /** Log lỗi nếu heartbeat thất bại */
+      console.error('[checkHeartbeat] Error:', error);
+      throw new BadRequestException('Failed to update heartbeat');
+    }
+  }
+
+  /** Lấy trạng thái online của cửa hàng */
+  async getStatus(shop_id: string) {
+    try {
+      /** Lấy Redis client từ connection */
+      const { REDIS_CLIENT } = await this.REDIS_CONN.exec({});
+      
+      /** Lấy thông tin online và last_seen từ Redis */
+      const [is_online, last_seen] = await Promise.all([
+        REDIS_CLIENT.exists(`shop:online:${shop_id}`),
+        REDIS_CLIENT.get(`shop:last_seen:${shop_id}`),
+      ]);
+
+      /** Trả về trạng thái */
+      return {
+        isOnline: Boolean(is_online),
+        lastSeenAt: last_seen ? Number(last_seen) : null,
+      };
+    } catch (error) {
+      /** Log lỗi nếu get status thất bại */
+      console.error('[getStatus] Error:', error);
+      /** Trả về trạng thái offline nếu có lỗi */
+      return {
+        isOnline: false,
+        lastSeenAt: null,
+      };
+    }
+  }
 }

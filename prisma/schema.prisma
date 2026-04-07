@@ -50,10 +50,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  //khai báo 2 chiều
+  /** Khai báo 2 chiều */
   passwordResetTokens PasswordResetToken[]
   shop shop?
   employer Employer?
+  wishlist Wishlist[]
+  comments comments[]
+  /** Quan hệ ngược với Cart */
+  carts Cart[]
 }
 
 model Author {
@@ -232,9 +236,16 @@ model products {
   brand              String?
   material           String[]
   weight             String?
+  category           String[]
+  rating             Float    @default(0)
+  reviewCount        Int      @default(0)
   
   is_published       Boolean  @default(false)
   is_hidden          Boolean  @default(false)
+  is_new             Boolean  @default(false)
+  is_featured        Boolean  @default(false)
+  is_discount        Boolean  @default(false)
+
   
   // Dùng Json cho thuộc tính động
   product_attributes Json?
@@ -243,19 +254,28 @@ model products {
   price_at_counter   Int
   retail_price       Int
   sale_price         Int
-  stock              Int
+  stock              Int      
   
   warehouse_id       String
+  shop_id            String   @default("1")
   
   // Quan hệ
   warehouse          Warehouse    @relation(fields: [warehouse_id], references: [id])
+  shop               shop         @relation(fields: [shop_id], references: [id])
   providers          Provider[]
   tags               tags[]
   categories         categories[]
-  shops              shop[]
+  wishlist           Wishlist[]
   inventories        Inventory[]
+  comments           comments[]
+  /** Quan hệ ngược với ProductVariant */
+  variants           ProductVariant[]
+  /** Quan hệ ngược với CartItem */
+  cartItems          CartItem[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+
+  @@index([id, shop_id, warehouse_id])
 }
 
 model shop {
@@ -266,6 +286,7 @@ model shop {
   name  String
   phone String?
   typeProvider String?
+  slug String @unique
   desc String?
   avatar_url String?
   bank String? // ngân hàng nào
@@ -298,6 +319,9 @@ model shop {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  last_seen_at DateTime @default(now())
+
+  @@index([id, userId])
 }
 
 model Employer {
@@ -319,6 +343,9 @@ model Employer {
   shop shop @relation(fields: [shop_id], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([id, shop_id])
+  @@index([userId])
 }
 
 model Inventory {
@@ -350,5 +377,138 @@ model Inventory {
   shop shop @relation(fields: [shopId], references: [id])
 
   @@unique([shopId, warehouseId, productId])
+  @@index([id, productId, warehouseId, shopId])
 
+}
+
+
+model Wishlist {
+  id        String    @id @default(cuid())
+  userId    Int
+  productId String
+  /** Quan hệ với bảng products */
+  product   products @relation(fields: [productId], references: [id])
+  /** Quan hệ với bảng user */
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /** Mỗi user chỉ được thêm 1 sản phẩm vào wishlist */
+  @@unique([userId, productId])
+}
+
+
+model comments {
+  id        String   @id @default(cuid())
+  productId String   
+  userId    Int      
+  content   String 
+  images    String[]
+  createdAt DateTime @default(now())
+  /** Prisma tự cập nhật khi có thay đổi */
+  updatedAt DateTime @updatedAt
+
+  /** Quan hệ ngược với products */
+  product   products @relation(fields: [productId], references: [id])
+  /** Quan hệ ngược với user */
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([productId, userId])
+}
+
+
+model Attribute {
+  id String  @id @default(uuid())
+  code String @unique
+  type String
+
+
+  values AttributeValue[]
+}
+
+model AttributeValue{
+  id String @id @default(uuid())
+  attributeId   String
+  code String
+  label String
+  
+
+  //Quan hệ với bảng Attributes
+  Attribute Attribute @relation(fields: [attributeId], references:[id])
+
+  variants VariantAttribute[]
+
+}
+
+model ProductVariant {
+  id        String  @id @default(uuid())
+  productId String
+  sku       String  @unique
+  price     Int
+  stock     Int
+
+  /** Quan hệ với bảng products */
+  product   products @relation(fields: [productId], references: [id])
+  /** Quan hệ ngược với VariantAttribute */
+  attrs     VariantAttribute[]
+  /** Quan hệ ngược với CartItem */
+  cartItems CartItem[]
+}
+
+model VariantAttribute {
+  variantId        String
+  attributeValueId String
+
+  /** Quan hệ với bảng ProductVariant */
+  variant          ProductVariant  @relation(fields: [variantId], references: [id])
+  /** Quan hệ với bảng AttributeValue */
+  attributeValue   AttributeValue  @relation(fields: [attributeValueId], references: [id])
+
+  @@id([variantId, attributeValueId])
+}
+
+
+//Enum Cart Status
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  /** Id của user, cùng kiểu Int với User.id */
+  userId    Int?
+  sessionId String?
+  status    CartStatus @default(ACTIVE)
+
+  expiresAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  items     CartItem[]
+
+  user      User?      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+
+model CartItem {
+  id               String          @id @default(uuid())
+  cartId           String
+  productId        String
+  productVariantId String
+  quantity         Int
+
+
+  cart             Cart            @relation(fields: [cartId], references: [id])
+  product          products        @relation(fields: [productId], references: [id])
+  variant          ProductVariant  @relation(fields: [productVariantId], references: [id])
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([cartId, productVariantId])
 }

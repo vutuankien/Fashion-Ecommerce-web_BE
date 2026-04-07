@@ -6,6 +6,9 @@ import { Reflector } from '@nestjs/core';
 import { TokenService } from './token.service';
 /** Import key metadata của roles */
 import { ROLES_KEY } from './roles.decorator';
+/** Import key metadata của public decorator */
+import { IS_PUBLIC_KEY } from './public.decorator';
+
 
 //#region RolesGuard - Guard kiểm tra quyền truy cập
 /**
@@ -28,6 +31,19 @@ export class RolesGuard implements CanActivate {
      * @returns true nếu được phép, throw UnauthorizedException nếu không
      */
     canActivate(context: ExecutionContext): boolean {
+        /** Kiểm tra xem endpoint có được đánh dấu là public không */
+        const IS_PUBLIC = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+            /** Lấy từ handler (method) */
+            context.getHandler(),
+            /** Lấy từ class (controller) */
+            context.getClass(),
+        ]);
+
+        /** Nếu là endpoint public, cho phép truy cập mà không cần kiểm tra token */
+        if (IS_PUBLIC) {
+            return true;
+        }
+
         /** Lấy danh sách roles được phép từ decorator */
         const REQUIRED_ROLES = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
             /** Lấy từ handler (method) */

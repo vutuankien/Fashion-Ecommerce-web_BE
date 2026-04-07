@@ -148,14 +148,24 @@ export class ProductsRepo {
     }
 
     async findOne(id: string) {
+        /** Tìm sản phẩm theo ID kèm theo danh sách phiên bản */
         const PRODUCT = await this.prismaService.products.findUnique({
-            where: { id }
+            /** Điều kiện lọc theo ID */
+            where: { id },
+            /** Bao gồm các bảng liên quan */
+            include: {
+                /** Bao gồm phiên bản sản phẩm */
+                variants: true
+            }
         });
 
+        /** Kiểm tra nếu không tìm thấy sản phẩm */
         if (!PRODUCT) {
+            /** Ném lỗi không tìm thấy */
             throw new NotFoundException(`Product with ID "${id}" not found`);
         }
 
+        /** Trả về dữ liệu sản phẩm */
         return PRODUCT;
     }
 
@@ -189,9 +199,18 @@ export class ProductsRepo {
         return this.prismaService.products.count({ where });
     }
 
-    /** Tìm nhiều products với options */
+    /** Tìm nhiều products với options, bao gồm các variants */
     async findMany(options: { where?: Record<string, unknown>; take?: number; skip?: number; orderBy?: Record<string, string> }) {
-        return this.prismaService.products.findMany(options);
+        /** Gọi prisma findMany với các tùy chọn và include variants */
+        return this.prismaService.products.findMany({
+            /** Kế thừa các điều kiện truy vấn */
+            ...options,
+            /** Bao gồm dữ liệu các phiên bản sản phẩm */
+            include: {
+                /** Lấy danh sách phiên bản */
+                variants: true
+            }
+        });
     }
 
     

@@ -6,6 +6,7 @@ import { UpdateShopDto } from './dto/update-shop.dto';
 import { ResponseHelper } from 'src/helper/response.helper';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { Public } from '../auth/public.decorator';
 @UseGuards(RolesGuard)
 /** Controller quản lý cửa hàng */
 @Controller('shop')
@@ -44,6 +45,25 @@ export class ShopController {
     }
   }
 
+  /** Lấy thông tin cửa hàng theo product_id - PHẢI ĐẶT TRƯỚC route :id */
+  @Get('product/:product_id')
+  @Public()
+  async findShopByProductId(@Param('product_id') product_id: string) {
+    /** Gọi service tìm cửa hàng theo product_id */
+    const DATA = await this.SHOP_SERVICE.getShopByProductId(product_id);
+
+    return ResponseHelper.Success(DATA, "Get shop successfully", 200);
+  }
+
+  /** Lấy thông tin cửa hàng theo slug */
+  @Get('slug/:slug')
+  @Public()
+  async findShopBySlug(@Param('slug') slug: string) {
+    /** Gọi service tìm cửa hàng theo slug */
+    const DATA = await this.SHOP_SERVICE.getShopBySlug(slug);
+    return ResponseHelper.Success(DATA, "Get shop successfully", 200);
+  }
+
   /** Lấy thông tin chi tiết một cửa hàng */
   @Get(':id')
   async FindOne(@Param('id') id: string) {
@@ -66,7 +86,22 @@ export class ShopController {
     /** Gọi service xóa cửa hàng */
     const DATA = await this.SHOP_SERVICE.Remove(id);
     return ResponseHelper.Success(DATA, "Delete shop successfully", 200);
-  
   }
 
+
+  /** Check heartbeat của cửa hàng */
+  @Patch('check-heartbeat/:id')
+  @Public()
+  async checkHeartbeat(@Param('id') id: string) {
+    const DATA = await this.SHOP_SERVICE.touchOnline(id);
+    return ResponseHelper.Success(DATA, "Check heartbeat successfully", 200);
+  }
+
+  /** Lấy trạng thái của cửa hàng */
+  @Get('status/:id')
+  @Public()
+  async getStatus(@Param('id') id: string) {
+    const DATA = await this.SHOP_SERVICE.getStatus(id);
+    return ResponseHelper.Success(DATA, "Get status successfully", 200);
+  }
 }

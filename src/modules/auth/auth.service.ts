@@ -6,6 +6,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PasswordService } from './password.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserCache } from '../user/user.cache';
+import { clerkClient } from '@clerk/clerk-sdk-node';
 
 /**Dịch vụ xác thực người dùng */
 @Injectable()
@@ -54,12 +55,22 @@ export class AuthService {
 
             /** Nếu là shop thì tạo thêm shop */
             if (role === 'shop') {
+                /** Tạo SLUG từ name */
+                const SLUG = name.toLowerCase().replace(/\s+/g, '-');
+                /** Thực hiện tạo shop trong transaction */
                 await tx.shop.create({
+                    /** Dữ liệu khởi tạo shop */
                     data: {
+                        /** Gán email */
                         email,
+                        /** Gán tên */
                         name,
+                        /** Gán mật khẩu đã băm */
                         password: HASHED_PASSWORD,
-                        userId: NEW_USER.id
+                        /** Gán userId liên kết */
+                        userId: NEW_USER.id,
+                        /** Gán slug duy nhất */
+                        slug: SLUG
                     },
                 });
             }
@@ -191,8 +202,8 @@ export class AuthService {
             throw new BadRequestException('refresh_token is required');
         }
 
-        /**Tạo payload từ refresh_token */
-        let payload: any;
+        /** Khai báo biến PAYLOAD lưu thông tin từ token */
+        let payload: { sub: number; email: string; role: string; iat: number; exp: number };
 
         /**Try catch để bắt lỗi */
         try {
@@ -326,6 +337,97 @@ export class AuthService {
 
         /**Trả về kết quả thành công */
         return { message: 'Password has been reset successfully' };
+    }
+
+
+    /**
+     * Đăng nhập bằng Clerk
+     * @param token - Token từ Clerk
+     */
+    async loginWithClerk(token: string) {
+        try {
+            /** Xác thực token từ Clerk */
+            const VERIFIED_TOKEN = await clerkClient.verifyToken(token);
+
+            /** Lấy thông tin user từ Clerk */
+            const CLERK_USER = await clerkClient.users.getUser(VERIFIED_TOKEN.sub);
+
+            /** Lấy email từ Clerk user */
+            const EMAIL = CLERK_USER.emailAddresses[0]?.emailAddress;
+
+            if (!EMAIL) {
+                throw new BadRequestException('Email not found in Clerk user');
+            }
+
+            /** Tìm user trong database */
+            let user = await this.prisma.user.findUnique({
+                where: { email: EMAIL },
+            });
+
+            /** Nếu user chưa tồn tại thì tạo mới */
+            if (!user) {
+                /** Tạo password ngẫu nhiên và hash */
+                const RANDOM_PASSWORD = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+                const HASHED_PASSWORD = await PasswordService.HashPassword(RANDOM_PASSWORD);
+                
+                /** Tạo user mới */
+                user = await this.prisma.user.create({
+                    data: {
+                        email: EMAIL,
+                        name: `${CLERK_USER.firstName || ''} ${CLERK_USER.lastName || ''}`.trim() || 'Clerk User',
+                        password: HASHED_PASSWORD,
+                        provider: 'clerk',
+                        role: 'user',
+                        avatar_url: CLERK_USER.imageUrl
+                    }
+                });
+            }
+
+            /** Tạo refresh token */
+            const REFRESH_TOKEN = this.token_service.GenerateRefreshToken({
+                user_id: user.id,
+                role: user.role,
+            });
+
+            /** Hash refresh token */
+            const HASHED_REFRESH_TOKEN = await PasswordService.HashPassword(REFRESH_TOKEN);
+
+            /** Cập nhật refresh token vào database tùy theo role */
+            switch (user.role) {
+                case 'shop':
+                    await this.prisma.shop.update({
+                        where: { userId: user.id },
+                        data: { refresh_token: HASHED_REFRESH_TOKEN },
+                    });
+                    break;
+                case 'employer':
+                    await this.prisma.employer.update({
+                        where: { userId: user.id },
+                        data: { refresh_token: HASHED_REFRESH_TOKEN },
+                    });
+                    break;
+                default:
+                    await this.prisma.user.update({
+                        where: { id: user.id },
+                        data: { refresh_token: HASHED_REFRESH_TOKEN },
+                    });
+                    break;
+            }
+
+            /** Trả về access token và refresh token */
+            return {
+                access_token: this.token_service.GenerateToken({
+                    user_id: user.id,
+                    email: user.email,
+                    role: user.role,
+                }),
+                refresh_token: REFRESH_TOKEN,
+            };
+
+        } catch (error) {
+            console.error(error);
+            throw new UnauthorizedException('Invalid Clerk token');
+        }
     }
 
 }

@@ -6,70 +6,137 @@ import { ResponseHelper } from 'src/helper/response.helper';
 import { Roles } from '../auth/roles.decorator';
 import { AuthService } from '../auth/auth.service';
 import { RolesGuard } from '../auth/roles.guard';
+/** Import Public decorator để đánh dấu endpoint không cần auth */
+import { Public } from '../auth/public.decorator';
 @UseGuards(RolesGuard)
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  /** Khởi tạo controller với service */
+  constructor(
+    /** Service xử lý logic sản phẩm */
+    private readonly PRODUCTS_SERVICE: ProductsService
+  ) {}
 
+  /** Endpoint tạo sản phẩm mới */
   @Post()
   @Roles("admin")
-  async create(@Body() createProductDto: CreateProductDto) {
-    const NEW_PRODUCT = await this.productsService.create(createProductDto);
+  async Create(@Body() create_product_dto: CreateProductDto) {
+    /** Gọi service để tạo sản phẩm */
+    const NEW_PRODUCT = await this.PRODUCTS_SERVICE.Create(create_product_dto);
+    /** Trả về phản hồi thành công */
     return ResponseHelper.Success(NEW_PRODUCT, 'Tạo sản phẩm thành công', 200)
   }
 
-  /** Controller lấy danh sách sản phẩm */
+  /** Endpoint lấy danh sách sản phẩm với các bộ lọc */
+  @Public() // Cho phép truy cập công khai không cần đăng nhập
   @Get()
-  @Roles("admin", "user")
-  async findAll(
-    /** Nhận page từ query */
+  async FindAll(
+    /** Trang hiện tại */
     @Query('page') page?: number,
-    /** Nhận limit từ query */
+    /** Số lượng bản ghi mỗi trang */
     @Query('limit') limit?: number,
-    /** Nhận search từ query */
+    /** Từ khóa tìm kiếm */
     @Query('search') search?: string,
-    /** Nhận sortBy từ query */
+    /** Trường sắp xếp */
     @Query('sortBy') sortBy?: string,
-    /** Nhận sortOrder từ query */
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-    /** Nhận minPrice từ query */
-    @Query('minPrice') minPrice?: number,
-    /** Nhận maxPrice từ query */
-    @Query('maxPrice') maxPrice?: number,
-    /** Nhận brand từ query */
+    /** Thứ tự sắp xếp */
+    @Query('sortOrder') sort_order?: 'asc' | 'desc',
+    /** Giá tối thiểu */
+    @Query('minPrice') min_price?: number,
+    /** Giá tối đa */
+    @Query('maxPrice') max_price?: number,
+    /** Thương hiệu */
     @Query('brand') brand?: string,
-    /** Nhận type từ query */
+    /** Loại sản phẩm */
     @Query('type') type?: string,
-    /** Nhận is_published từ query */
+    /** Trạng thái xuất bản */
     @Query('is_published') is_published?: boolean,
-    /** Nhận warehouse_id từ query */
+    /** ID kho hàng */
     @Query('warehouse_id') warehouse_id?: string
   ) {
-    const DATA = await this.productsService.findAll({ 
-      page, limit, search, sortBy, sortOrder,
-      minPrice, maxPrice, brand, type, is_published, warehouse_id
+    /** Gọi service lấy danh sách với tham số truyền vào */
+    const DATA = await this.PRODUCTS_SERVICE.FindAll({ 
+      page, limit, search, sortBy, sortOrder: sort_order,
+      minPrice: min_price, maxPrice: max_price, brand, type, is_published, warehouse_id
     });
+    /** Trả về danh sách sản phẩm */
     return ResponseHelper.Success(DATA, 'Lấy danh sách sản phẩm thành công', 200);
   }
+
+  /** Endpoint lấy chi tiết một sản phẩm theo ID */
+  @Public() // Cho phép truy cập công khai không cần đăng nhập
   @Get(':id')
-  @Roles("admin", "user")
-  async findOne(@Param('id') id: string) {
-    const PRODUCT = await this.productsService.findOne(id);
-    return ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công',200);
+  async FindOne(@Param('id') id: string) {
+    /** Gọi service để lấy thông tin chi tiết */
+    const PRODUCT = await this.PRODUCTS_SERVICE.FindOne(id);
+    /** Trả về sản phẩm tìm thấy */
+    return ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công', 200);
   }
 
+  /** Endpoint cập nhật thông tin sản phẩm */
   @Patch(':id')
   @Roles("admin")
-  async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    const PRODUCT = await this.productsService.update(id, updateProductDto);
-    return ResponseHelper.Success(PRODUCT, 'Cập nhật sản phẩm thành công',200);
+  async Update(@Param('id') id: string, @Body() update_product_dto: UpdateProductDto) {
+    /** Gọi service cập nhật dữ liệu */
+    const PRODUCT = await this.PRODUCTS_SERVICE.Update(id, update_product_dto);
+    /** Trả về thông tin sản phẩm sau cập nhật */
+    return ResponseHelper.Success(PRODUCT, 'Cập nhật sản phẩm thành công', 200);
   }
 
+  /** Endpoint xóa sản phẩm theo ID */
   @Delete(':id')
   @Roles("admin")
-  async remove(@Param('id') id: string) {
-    const PRODUCT = await this.productsService.remove(id);
-    return ResponseHelper.Success(PRODUCT, 'Xóa sản phẩm thành công',200);
+  async Remove(@Param('id') id: string) {
+    /** Gọi service thực hiện xóa */
+    const PRODUCT = await this.PRODUCTS_SERVICE.Remove(id);
+    /** Trả về thông tin sản phẩm đã xóa */
+    return ResponseHelper.Success(PRODUCT, 'Xóa sản phẩm thành công', 200);
+  }
+  
+  /** Endpoint lấy tất cả sản phẩm của một shop */
+  @Get('shop/:shop_id')
+  @Public()
+  async GetAllProductByShopId(@Param('shop_id') shop_id: string) {
+    /** Lấy danh sách sản phẩm từ service */
+    const PRODUCT = await this.PRODUCTS_SERVICE.GetAllProductByShopId(shop_id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công', 200);
+  }
+
+  /** Endpoint lấy chi tiết một sản phẩm thuộc shop */
+  @Get('shop/:shop_id/:id')
+  @Public()
+  async GetProductByShopId(
+    @Param('shop_id') shop_id: string,
+    @Param('id') id: string
+  ) {
+    /** Lấy chi tiết sản phẩm từ service với kiểm tra shop_id */
+    const PRODUCT = await this.PRODUCTS_SERVICE.GetProductByShopId(shop_id, id);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(PRODUCT, 'Lấy sản phẩm thành công', 200);
+  }
+
+  /** Endpoint xóa tất cả sản phẩm của một shop */
+  @Delete('shop/:shop_id')
+  @Roles("admin")
+  async RemoveAllByShop(@Param('shop_id') shop_id: string) {
+    /** Gọi service thực hiện xóa hàng loạt */
+    const DATA = await this.PRODUCTS_SERVICE.RemoveAllProductsByShopId(shop_id);
+    /** Trả về thông báo thành công */
+    return ResponseHelper.Success(DATA, 'Xóa tất cả sản phẩm của shop thành công', 200);
+  }
+
+  /** Endpoint xóa một sản phẩm cụ thể của shop */
+  @Delete('shop/:shop_id/:id')
+  @Roles("admin")
+  async RemoveByShop(
+    @Param('shop_id') shop_id: string,
+    @Param('id') id: string
+  ) {
+    /** Gọi service thực hiện xóa một sản phẩm có kiểm tra shop_id */
+    const PRODUCT = await this.PRODUCTS_SERVICE.RemoveProductByShopId(shop_id, id);
+    /** Trả về sản phẩm đã xóa */
+    return ResponseHelper.Success(PRODUCT, 'Xóa sản phẩm của shop thành công', 200);
   }
 }

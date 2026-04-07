@@ -17,6 +17,11 @@ export class CreateShopDto {
     @IsNotEmpty()
     phone: string;
 
+    /**Slug của cửa hàng */
+    @IsString()
+    @IsOptional()
+    slug?: string;
+
     /**Email cửa hàng - Có thể để trống, mặc định là shop@gmail.com */
     @IsEmail()
     @IsOptional()

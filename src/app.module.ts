@@ -20,6 +20,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmployerModule } from './modules/employer/employer.module';
 
 import { ProductSearchModule } from './modules/product-search/product-search.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { VariantModule } from './modules/variant/variant.module';
+import { AttributeModule } from './modules/attribute/attribute.module';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -40,6 +44,10 @@ import { ProductSearchModule } from './modules/product-search/product-search.mod
     CloudinaryModule,
     EmployerModule,
     ProductSearchModule,
+    CommentsModule,
+    VariantModule,
+    AttributeModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],
