@@ -24,6 +24,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { VariantModule } from './modules/variant/variant.module';
 import { AttributeModule } from './modules/attribute/attribute.module';
 import { CartModule } from './modules/cart/cart.module';
+import { FollowShopModule } from './modules/follow-shop/follow-shop.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CartModule } from './modules/cart/cart.module';
     VariantModule,
     AttributeModule,
     CartModule,
+    FollowShopModule,
   ],
   controllers: [AppController],
   providers: [AppService],
