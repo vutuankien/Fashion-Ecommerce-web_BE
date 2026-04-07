@@ -148,8 +148,14 @@ export class ShopService {
     const EXIST_SHOP = await this.SHOP_CACHE.get(id);
 
     if(!EXIST_SHOP) throw new NotFoundException("No Shop Found")
+
+    const SHOP = await this.PRISMA_SERVICE.shop.findUnique({
+      where: {
+        id,
+      },
+    });
     /** Tìm cửa hàng theo id */
-    return EXIST_SHOP
+    return SHOP
   }
 
   /** Cập nhật thông tin cửa hàng */

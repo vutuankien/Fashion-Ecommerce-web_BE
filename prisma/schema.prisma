@@ -58,6 +58,8 @@ model User {
   comments comments[]
   /** Quan hệ ngược với Cart */
   carts Cart[]
+  //Quan hệ ngược với FollowShop
+  FollowShop FollowShop[]
 }
 
 model Author {
@@ -294,6 +296,7 @@ model shop {
   bank_number String? // số tài khoản
   password String?
   refresh_token String?
+  followersCount Int @default(0)
 
 
   address String? //full địa chỉ
@@ -316,6 +319,8 @@ model shop {
   employer Employer[]
   //Quan hệ ngược với inventory
   inventory Inventory[]
+  //Quan hệ ngược với FollowShop
+  FollowShop FollowShop[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -511,4 +516,20 @@ model CartItem {
   updatedAt        DateTime        @updatedAt
 
   @@unique([cartId, productVariantId])
+}
+
+
+model FollowShop {
+  id String @id @default(uuid())
+  userId Int
+  shopId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
 }

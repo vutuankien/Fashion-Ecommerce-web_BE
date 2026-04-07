@@ -14,5 +14,6 @@ import { RedisModule } from 'src/config/redis.module';
   imports:[AuthModule, RedisModule],
   controllers: [ShopController],
   providers: [ShopService,PrismaService,CloudinaryService, ShopCache],
+  exports: [ShopCache],
 })
 export class ShopModule {}
