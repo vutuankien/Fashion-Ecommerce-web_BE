@@ -3,15 +3,18 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsRepo } from './products.repo';
 import { ProductsCache } from './products.cache';
+import { ProductSearchService } from '../product-search/product-search.service';
 
 @Injectable()
 export class ProductsService {
-  /** Khởi tạo service với Repo và Cache */
+  /** Khởi tạo service với Repo, Cache và ProductSearch */
   constructor(
     /** Kho lưu trữ sản phẩm */
     private readonly PRODUCTS_REPO: ProductsRepo,
     /** Bộ nhớ đệm sản phẩm */
-    private readonly PRODUCTS_CACHE: ProductsCache
+    private readonly PRODUCTS_CACHE: ProductsCache,
+    /** Service tìm kiếm sản phẩm Elasticsearch */
+    private readonly PRODUCT_SEARCH_SERVICE: ProductSearchService
   ) {}
 
   /** Tạo sản phẩm mới */
@@ -20,6 +23,24 @@ export class ProductsService {
     const NEW_PRODUCT = await this.PRODUCTS_REPO.create(create_product_dto);
     /** Lưu sản phẩm mới tạo vào cache */
     await this.PRODUCTS_CACHE.Set(NEW_PRODUCT);
+    
+    /** Đồng bộ sản phẩm mới vào Elasticsearch ngay lập tức */
+    try {
+      await this.PRODUCT_SEARCH_SERVICE.indexProduct({
+        id: NEW_PRODUCT.id,
+        name: NEW_PRODUCT.name,
+        brand: NEW_PRODUCT.brand || '',
+        category: Array.isArray(NEW_PRODUCT.category) ? NEW_PRODUCT.category.join(', ') : NEW_PRODUCT.category || '',
+        price: NEW_PRODUCT.sale_price,
+        rating: NEW_PRODUCT.rating,
+        keyword: NEW_PRODUCT.keyword || '',
+        image_url: NEW_PRODUCT.images?.[0] || ''
+      });
+    } catch (error) {
+      /** Ghi nhận lỗi nhưng không làm gián đoạn quá trình tạo sản phẩm */
+      console.error('Lỗi khi index sản phẩm vào Elasticsearch:', error);
+    }
+    
     /** Trả về sản phẩm mới */
     return NEW_PRODUCT;
   }
@@ -146,6 +167,24 @@ export class ProductsService {
     const UPDATED_PRODUCT = await this.PRODUCTS_REPO.update(id, update_product_dto);
     /** Cập nhật lại thông tin mới vào bộ nhớ đệm */
     await this.PRODUCTS_CACHE.Set(UPDATED_PRODUCT);
+    
+    /** Cập nhật sản phẩm trong Elasticsearch */
+    try {
+      await this.PRODUCT_SEARCH_SERVICE.indexProduct({
+        id: UPDATED_PRODUCT.id,
+        name: UPDATED_PRODUCT.name,
+        brand: UPDATED_PRODUCT.brand || '',
+        category: Array.isArray(UPDATED_PRODUCT.category) ? UPDATED_PRODUCT.category.join(', ') : UPDATED_PRODUCT.category || '',
+        price: UPDATED_PRODUCT.sale_price,
+        rating: UPDATED_PRODUCT.rating,
+        keyword: UPDATED_PRODUCT.keyword || '',
+        image_url: UPDATED_PRODUCT.images?.[0] || ''
+      });
+    } catch (error) {
+      /** Ghi nhận lỗi nhưng không làm gián đoạn quá trình cập nhật sản phẩm */
+      console.error('Lỗi khi cập nhật sản phẩm trong Elasticsearch:', error);
+    }
+    
     /** Trả về kết quả sau cập nhật */
     return UPDATED_PRODUCT;
   }

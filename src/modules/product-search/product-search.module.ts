@@ -23,5 +23,6 @@ import { RedisModule } from 'src/config/redis.module';
     /**Import RedisModule */
     RedisModule,
   ],
+  exports: [ProductSearchService],
 })
 export class ProductSearchModule {}

@@ -5,9 +5,10 @@ import { ProductsRepo } from './products.repo';
 import { ProductsCache } from './products.cache';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ProductSearchModule } from '../product-search/product-search.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ProductSearchModule],
   controllers: [ProductsController],
   providers: [ProductsService,ProductsRepo,ProductsCache, PrismaService],
 })

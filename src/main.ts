@@ -23,7 +23,7 @@ async function bootstrap() {
   /** Cấu hình CORS để cho phép frontend truy cập */
   APP.enableCors({
     /** Cho phép origin từ frontend */
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3093',
     /** Cho phép credentials (cookies, authorization headers) */
     credentials: true,
     /** Các HTTP methods được phép */

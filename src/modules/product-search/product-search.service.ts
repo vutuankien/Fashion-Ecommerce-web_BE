@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { ElasticsearchService } from "@nestjs/elasticsearch";
 /** Import ProductSearchCache */
 import { ProductSearchCache } from "./product-search.cache";
@@ -17,6 +17,8 @@ export interface IProductItem {
   category: string;
   price: number;
   rating: number;
+  keyword?: string;
+  image_url?: string;
 }
 
 /**Bộ lọc tìm kiếm */
@@ -24,6 +26,7 @@ export interface ISearchFilters {
   brand?: string;
   category?: string;
   minPrice?: number;
+  // keyword?: string;
 }
 
 /**Interface service tìm kiếm sản phẩm */
@@ -37,7 +40,7 @@ export interface IProductSearchService {
  * Service quản lý việc tìm kiếm và index sản phẩm sử dụng Elasticsearch
  */
 @Injectable()
-export class ProductSearchService implements IProductSearchService {
+export class ProductSearchService implements IProductSearchService, OnModuleInit {
   /**Tên index trong Elasticsearch */
   private readonly INDEX_NAME = 'products';
 
@@ -46,6 +49,13 @@ export class ProductSearchService implements IProductSearchService {
     /** Inject ProductSearchCache */
     private readonly PRODUCT_SEARCH_CACHE: ProductSearchCache
   ) { }
+
+  /**
+   * Khởi chạy khi module khởi tạo: tự động tạo index nếu chưa có
+   */
+  async onModuleInit(): Promise<void> {
+    await this.createIndex();
+  }
 
   /**
    * Tạo index mới nếu chưa tồn tại
@@ -70,6 +80,8 @@ export class ProductSearchService implements IProductSearchService {
           price: { type: 'integer' },
           rating: { type: 'float' },
           createdAt: { type: 'date' },
+          keyword: { type: 'text' },
+          image_url: { type: 'keyword' },
         },
       },
     });
