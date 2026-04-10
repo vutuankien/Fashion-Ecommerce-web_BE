@@ -75,6 +75,7 @@ export class CartService implements ICartService {
         product: {
           id: item.variant.product.id,
           name: item.variant.product.name,
+          image: item.variant.product.images[0] || null,
         },
         variant: {
           id: item.variant.id,

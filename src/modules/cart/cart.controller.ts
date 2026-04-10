@@ -62,7 +62,7 @@ export class CartController  {
   }
 
   /** Cập nhật số lượng của sản phẩm trong giỏ */
-  @Patch("/:id")
+  @Patch()
   /** Hàm xử lý thay đổi số lượng item */
   async updateItemQuantity(
     /** Nhận thông tin cập nhật từ body request */
@@ -88,7 +88,7 @@ export class CartController  {
   }
 
   /** Loại bỏ sản phẩm ra khỏi giỏ hàng */
-  @Delete("/:id")
+  @Delete()
   /** Hàm xử lý xóa item */
   async removeItem(
     /** Nhận thông tin nhận diện sản phẩm cần xóa từ body */

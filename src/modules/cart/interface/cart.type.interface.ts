@@ -24,6 +24,8 @@ export interface ICartItemView {
         id: string;
         /** Tên hiển thị của sản phẩm */
         name: string;
+        /** URL của ảnh đại diện sản phẩm */
+        image: string | null;
     };
 
     /** Thông tin chi tiết về phiên bản (màu sắc, kích thước...) */
