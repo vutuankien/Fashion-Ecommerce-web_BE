@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 /** import thư viện bcrypt */
 import * as bcrypt from 'bcrypt';
 /** import cloudinary service */
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
 /** import thư viện sharp */
 import sharp from 'sharp';
 /** import dto xóa nhân viên */

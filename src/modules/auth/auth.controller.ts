@@ -1,11 +1,11 @@
 /** Import các decorator từ NestJS */
 import { Body, Controller, Post } from '@nestjs/common';
 /** Import các DTO cho Auth */
-import { IForgotPasswordDto, ILoginDto, IRegisterDto } from 'src/DTO/Auth/auth.dto';
+import { IForgotPasswordDto, ILoginDto, IRegisterDto } from '@/DTO/Auth/auth.dto';
 /** Import AuthService để xử lý nghiệp vụ xác thực */
 import { AuthService } from './auth.service';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 
 /** Định nghĩa Controller cho Auth */
 @Controller('auth')

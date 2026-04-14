@@ -7,7 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 /** Import UpdateCategoryDto để định nghĩa dữ liệu cập nhật */
 import { UpdateCategoryDto } from './dto/update-category.dto';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 
 /** Định nghĩa Controller cho Categories */
 @Controller('categories')

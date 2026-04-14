@@ -3,7 +3,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 /** Import AddressService để xử lý nghiệp vụ địa chỉ */
 import { AddressService } from './address.service';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 /** Import Cron từ NestJS Schedule */
 import { Cron } from '@nestjs/schedule';
 

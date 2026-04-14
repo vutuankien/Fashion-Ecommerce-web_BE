@@ -5,7 +5,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 /** Import UpdateCategoryDto */
 import { UpdateCategoryDto } from './dto/update-category.dto';
 /** Import PrismaService */
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 /** Import CategoriesCache */
 import { CategoriesCache } from './categories.cache';
 

@@ -1,4 +1,4 @@
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { BadRequestException, NotFoundException, Injectable } from "@nestjs/common";
 import { UpdateProductDto } from "./dto/update-product.dto";

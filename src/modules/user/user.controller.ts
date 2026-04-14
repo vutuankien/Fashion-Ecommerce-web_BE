@@ -3,9 +3,9 @@ import { Controller, Get, Body, Post, Param, Put, Delete, Query, UseGuards, Pars
 /** Import UserService để tương tác với cơ sở dữ liệu và nghiệp vụ người dùng */
 import { UserService } from './user.service';
 /** Import các DTO định nghĩa cấu trúc dữ liệu cho người dùng */
-import { ICreateUserDto, IDynamicSearchDto } from 'src/DTO/User/user.dto';
+import { ICreateUserDto, IDynamicSearchDto } from '@/DTO/User/user.dto';
 /** Import ResponseHelper để trả về dữ liệu theo định dạng chuẩn */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 /** Import RolesGuard để bảo vệ routes */
 import { RolesGuard } from '../auth/roles.guard';
 /** Import Roles decorator để phân quyền */

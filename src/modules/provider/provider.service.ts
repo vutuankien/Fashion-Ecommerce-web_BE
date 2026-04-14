@@ -5,7 +5,7 @@ import { CreateProviderDto } from './dto/create-provider.dto';
 /** Import DTO cập nhật provider */
 import { UpdateProviderDto } from './dto/update-provider.dto';
 /** Import PrismaService để tương tác với cơ sở dữ liệu */
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 /** Service quản lý nhà cung cấp */
 @Injectable()

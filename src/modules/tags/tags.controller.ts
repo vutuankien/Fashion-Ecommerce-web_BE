@@ -9,7 +9,7 @@ import { Roles } from '../auth/roles.decorator';
 /** Import RolesGuard để bảo vệ route */
 import { RolesGuard } from '../auth/roles.guard';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 
 /** Định nghĩa Controller cho Tags */
 @Controller('tags')

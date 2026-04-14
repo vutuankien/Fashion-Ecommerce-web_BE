@@ -8,7 +8,7 @@ import { UserRepository } from './user.repository';
 import { ICreateUserDto } from '../../DTO/User/user.dto';
 /** Nhập khẩu dịch vụ mã hóa mật khẩu */
 import { PasswordService } from '../auth/password.service';
-import { IUser } from 'src/interfaces/user/user.interface';
+import { IUser } from '@/interfaces/user/user.interface';
 /** Interface cho pagination options */
 interface PaginationOptions {
     page?: number;      // Trang hiện tại (bắt đầu từ 1)

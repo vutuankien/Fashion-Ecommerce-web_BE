@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 import { AuthController } from './auth.controller';
 import { PasswordService } from './password.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { RolesGuard } from './roles.guard';
 import { UserCache } from '../user/user.cache';
 import { UserRepository } from '../user/user.repository';

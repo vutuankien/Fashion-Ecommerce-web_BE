@@ -5,7 +5,7 @@ import { ICartService } from './interface/cart.service.interface';
 /** Import cấu trúc dữ liệu giỏ hàng phối hợp item */
 import { ICartWithItems } from './interface/cart.type.interface';
 /** Import dịch vụ prisma để truy vấn dữ liệu */
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 /** Import enum trạng thái giỏ hàng từ prisma client */
 import { CartStatus } from '@prisma/client';
 

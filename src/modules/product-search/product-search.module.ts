@@ -9,7 +9,7 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 /** Import ProductSearchCache */
 import { ProductSearchCache } from './product-search.cache';
 /** Import RedisModule */
-import { RedisModule } from 'src/config/redis.module';
+import { RedisModule } from '@/config/redis.module';
 
 /**Module tìm kiếm sản phẩm */
 @Module({

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { Attribute, AttributeValue } from '@prisma/client';
 import { IAttributeService } from './interface/attribute.interface';
 import { CreateAttributeDto } from './dto/create-attribute.dto';

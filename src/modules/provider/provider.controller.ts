@@ -7,7 +7,7 @@ import { CreateProviderDto } from './dto/create-provider.dto';
 /** Import UpdateProviderDto để định nghĩa dữ liệu cập nhật */
 import { UpdateProviderDto } from './dto/update-provider.dto';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 
 /** Định nghĩa Controller cho Provider */
 @Controller('provider')
