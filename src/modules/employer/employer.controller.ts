@@ -7,7 +7,7 @@ import { CreateEmployerDto } from './dto/create-employer.dto';
 /** import dto cập nhật employer */
 import { UpdateEmployerDto } from './dto/update-employer.dto';
 /** import helper phản hồi */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 @UseGuards(RolesGuard)

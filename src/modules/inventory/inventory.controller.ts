@@ -7,7 +7,7 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 /** Import UpdateInventoryDto để định nghĩa dữ liệu cập nhật */
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 
 /** Định nghĩa Controller cho Inventory */
 @Controller('inventory')

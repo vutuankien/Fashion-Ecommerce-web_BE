@@ -4,7 +4,7 @@ import { ProductsController } from './products.controller';
 import { ProductsRepo } from './products.repo';
 import { ProductsCache } from './products.cache';
 import { AuthModule } from '../auth/auth.module';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { ProductSearchModule } from '../product-search/product-search.module';
 
 @Module({

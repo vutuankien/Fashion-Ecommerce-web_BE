@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Voucher" ALTER COLUMN "quantity" DROP NOT NULL,
+ALTER COLUMN "quantity" SET DEFAULT 1,
+ALTER COLUMN "used" DROP NOT NULL;

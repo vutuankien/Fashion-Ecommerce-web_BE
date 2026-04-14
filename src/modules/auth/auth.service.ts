@@ -1,8 +1,8 @@
 import { TokenService } from './token.service';
 import { Prisma } from '@prisma/client';
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { ILoginDto, IRefreshTokenDto, IRegisterDto, IForgotPasswordDto, IResetPasswordDto } from 'src/DTO/Auth/auth.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ILoginDto, IRefreshTokenDto, IRegisterDto, IForgotPasswordDto, IResetPasswordDto } from '@/DTO/Auth/auth.dto';
+import { PrismaService } from '@/prisma/prisma.service';
 import { PasswordService } from './password.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserCache } from '../user/user.cache';

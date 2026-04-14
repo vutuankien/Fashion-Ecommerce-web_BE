@@ -60,6 +60,7 @@ model User {
   carts Cart[]
   //Quan hệ ngược với FollowShop
   FollowShop FollowShop[]
+  voucherUsages VoucherUsage[]
 }
 
 model Author {
@@ -190,6 +191,7 @@ model categories {
   name  String
   
   products products[]
+  voucherCategories VoucherCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -321,6 +323,8 @@ model shop {
   inventory Inventory[]
   //Quan hệ ngược với FollowShop
   FollowShop FollowShop[]
+  //quan hệ ngược với voucher
+  Voucher Voucher[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -532,4 +536,138 @@ model FollowShop {
   @@unique([userId, shopId])
   @@index([userId])
   @@index([shopId])
+}
+
+//người tạo ra voucher
+enum VoucherProvider {
+  SHOP
+  ADMIN
+}
+
+//loại voucher là gì? 
+enum VoucherType {
+  FREESHIPPING
+  DISCOUNT_MONEY
+  DISCOUNT_PERCENT
+}
+
+
+//voucher áp dụng cho đâu
+enum VoucherApplyType {
+  ALL
+  PRODUCT
+  CATEGORY
+}
+
+
+model Voucher {
+  id        String   @id @default(uuid())
+
+  // ai tạo
+  provider  VoucherProvider @default(ADMIN)
+  shopId    String?
+
+  // thông tin cơ bản
+  code      String   @unique
+  name      String
+
+  type      VoucherType
+
+  // giá trị giảm
+  value     Int      // 10k hoặc 10 (%)
+  maxValue  Int?     // cap cho percent
+
+  // điều kiện áp dụng
+  minOrderValue Int?
+
+  // phạm vi áp dụng
+  applyType VoucherApplyType @default(ALL)
+
+  // số lượng
+  quantity  Int?      @default(1)
+  used      Int?      @default(0)
+
+  // giới hạn user
+  usageLimitPerUser Int?
+
+  // freeshipping
+  shippingDiscount Int?
+
+  // trạng thái
+  isActive  Boolean  @default(true)
+  isPublic  Boolean  @default(true)
+
+  // thời gian
+  startTime DateTime
+  endTime   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  shop shop? @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  voucherProducts  VoucherProduct[]
+  voucherCategories VoucherCategory[]
+  usages           VoucherUsage[]
+  OrderVoucher      OrderVoucher[]
+
+  @@index([code])
+  @@index([shopId])
+  @@index([startTime, endTime])
+}
+
+
+//voucher áp dụng cho sản phẩm
+model VoucherProduct {
+  id         String @id @default(uuid())
+  voucherId  String
+  productId  String
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherId, productId])
+}
+
+//voucher cho ngành hàng
+model VoucherCategory {
+  id          String @id @default(uuid())
+  voucherId   String
+  categoryId  String
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  category categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherId, categoryId])
+}
+
+//tracking voucher sử dụng
+model VoucherUsage {
+  id        String @id @default(uuid())
+
+  userId    Int
+  voucherId String
+
+  usedCount Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+}
+
+
+//voucher cho order
+model OrderVoucher {
+  id        String @id @default(uuid())
+
+  orderId   String
+  voucherId String
+
+  discountAmount Int
+
+  voucher Voucher @relation(fields: [voucherId], references: [id])
+
+  @@index([orderId])
 }

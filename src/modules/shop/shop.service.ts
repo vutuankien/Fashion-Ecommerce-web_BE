@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { PrismaService } from '@/prisma/prisma.service';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
 import sharp from 'sharp';
 /** Import ShopCache */
 import { ShopCache } from './shop.cache';
-import { RedisConnection } from 'src/config/redis.config';
+import { RedisConnection } from '@/config/redis.config';
 
 
 const ONLINE_TTL = 90;//seconds

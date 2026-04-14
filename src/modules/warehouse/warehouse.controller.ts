@@ -5,7 +5,7 @@ import { WarehouseService } from './warehouse.service';
 /** Import CreateWarehouseDto để định nghĩa dữ liệu tạo mới */
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 /** Import ResponseHelper để định dạng phản hồi API */
-import { ResponseHelper } from 'src/helper/response.helper';
+import { ResponseHelper } from '@/helper/response.helper';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 
 /** Định nghĩa Controller cho Warehouse */

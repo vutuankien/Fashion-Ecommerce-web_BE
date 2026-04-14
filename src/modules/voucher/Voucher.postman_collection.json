@@ -1,0 +1,626 @@
+{
+  "info": {
+    "name": "Voucher Module API",
+    "description": "API collection for Voucher module management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Voucher",
+      "description": "CRUD operations for voucher",
+      "item": [
+        {
+          "name": "Create Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER2024\",\n  \"name\": \"Summer Discount\",\n  \"type\": \"DISCOUNT_PERCENT\",\n  \"applyType\": \"ALL\",\n  \"provider\": \"ADMIN\",\n  \"value\": 15,\n  \"maxValue\": 50000,\n  \"minOrderValue\": 100000,\n  \"quantity\": 100,\n  \"usageLimitPerUser\": 5,\n  \"isActive\": true,\n  \"isPublic\": true,\n  \"startDate\": \"2024-06-01T00:00:00Z\",\n  \"endDate\": \"2024-08-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/voucher",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher created successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"code\": \"SUMMER2024\",\n    \"name\": \"Summer Discount\",\n    \"type\": \"DISCOUNT_PERCENT\",\n    \"applyType\": \"ALL\",\n    \"provider\": \"ADMIN\",\n    \"value\": 15,\n    \"maxValue\": 50000,\n    \"minOrderValue\": 100000,\n    \"quantity\": 100,\n    \"used\": 0,\n    \"usageLimitPerUser\": 5,\n    \"isActive\": true,\n    \"isPublic\": true,\n    \"startTime\": \"2024-06-01T00:00:00.000Z\",\n    \"endTime\": \"2024-08-31T23:59:59.000Z\",\n    \"createdAt\": \"2024-01-01T12:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Voucher by Shop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SHOP2024\",\n  \"name\": \"Shop Discount\",\n  \"type\": \"DISCOUNT_PERCENT\",\n  \"applyType\": \"ALL\",\n  \"provider\": \"SHOP\",\n  \"value\": 10,\n  \"maxValue\": 30000,\n  \"minOrderValue\": 50000,\n  \"quantity\": 50,\n  \"usageLimitPerUser\": 3,\n  \"isActive\": true,\n  \"isPublic\": true,\n  \"startDate\": \"2024-06-01T00:00:00Z\",\n  \"endDate\": \"2024-08-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/voucher/shop/:shopId",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "shop", ":shopId"],
+              "variable": [
+                {
+                  "key": "shopId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher created successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"code\": \"SHOP2024\",\n    \"name\": \"Shop Discount\",\n    \"shopId\": \"uuid\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Voucher Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher?id=uuid",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get voucher successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"code\": \"SUMMER2024\",\n    \"name\": \"Summer Discount\",\n    \"value\": 15,\n    \"type\": \"DISCOUNT_PERCENT\",\n    \"applyType\": \"ALL\",\n    \"quantity\": 100,\n    \"used\": 25,\n    \"minOrderValue\": 100000,\n    \"maxValue\": 50000,\n    \"usageLimitPerUser\": 5,\n    \"provider\": \"ADMIN\",\n    \"isActive\": true,\n    \"isPublic\": true,\n    \"startTime\": \"2024-06-01T00:00:00.000Z\",\n    \"endTime\": \"2024-08-31T23:59:59.000Z\",\n    \"createdAt\": \"2024-01-01T12:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/all?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "all"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get all vouchers successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/search?q=summer&page=1&limit=10&activeOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "summer"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "activeOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Search voucher successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Check Voucher Validity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/check?code=SUMMER2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "check"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "SUMMER2024"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Valid Voucher",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher is valid\",\n  \"data\": true\n}"
+            },
+            {
+              "name": "Invalid Voucher",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher is valid\",\n  \"data\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Vouchers by Shop",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/shop/:shopId?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "shop", ":shopId"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "shopId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get shop voucher successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Voucher",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Summer Discount\",\n  \"value\": 20,\n  \"maxValue\": 75000,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher updated successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"code\": \"SUMMER2024\",\n    \"name\": \"Updated Summer Discount\",\n    \"value\": 20,\n    \"maxValue\": 75000\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Voucher",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Voucher Product",
+      "description": "Manage voucher-product relationships",
+      "item": [
+        {
+          "name": "Create Voucher Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:voucherId/product/:productId",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":voucherId", "product", ":productId"],
+              "variable": [
+                {
+                  "key": "voucherId",
+                  "value": "uuid"
+                },
+                {
+                  "key": "productId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher product created successfully\",\n  \"data\": {\n    \"voucherId\": \"uuid\",\n    \"productId\": \"uuid\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Products by Voucher",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:voucherId/product?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":voucherId", "product"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "voucherId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get voucher products successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Vouchers by Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/product/:productId/voucher?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "product", ":productId", "voucher"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get vouchers by product successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Voucher Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:voucherId/product/:productId",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":voucherId", "product", ":productId"],
+              "variable": [
+                {
+                  "key": "voucherId",
+                  "value": "uuid"
+                },
+                {
+                  "key": "productId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher product deleted successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete All Vouchers by Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/product/:productId/voucher",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "product", ":productId", "voucher"],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Vouchers by product deleted successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete All Products by Voucher",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:voucherId/voucher",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":voucherId", "voucher"],
+              "variable": [
+                {
+                  "key": "voucherId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Vouchers by voucher deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Voucher Category",
+      "description": "Manage voucher-category relationships",
+      "item": [
+        {
+          "name": "Create Voucher Category",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/:voucherId/category/:categoryId",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", ":voucherId", "category", ":categoryId"],
+              "variable": [
+                {
+                  "key": "voucherId",
+                  "value": "uuid"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Voucher category created successfully\",\n  \"data\": {\n    \"voucherId\": \"uuid\",\n    \"categoryId\": \"uuid\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Voucher Category Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/category/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "category", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get voucher category successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"voucherId\": \"uuid\",\n    \"categoryId\": \"uuid\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Vouchers by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/category/:categoryId/voucher?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "category", ":categoryId", "voucher"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "categoryId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Get voucher categories successfully\",\n  \"data\": [],\n  \"pagination\": {\n    \"total\": 0,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Vouchers by Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voucher/category/:categoryId/voucher",
+              "host": ["{{baseUrl}}"],
+              "path": ["voucher", "category", ":categoryId", "voucher"],
+              "variable": [
+                {
+                  "key": "categoryId",
+                  "value": "uuid"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Vouchers by category deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+}
