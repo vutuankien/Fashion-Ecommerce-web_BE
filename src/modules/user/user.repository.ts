@@ -33,14 +33,10 @@ export class UserRepository implements IUserRepository {
     ) {}
 
     /** Thực hiện truy vấn tìm kiếm người dùng qua email */
-    async findByEmail(email: string): Promise<IUser | null> {
-        /** Sử dụng prisma để tìm bản ghi duy nhất */
-        const USER = await this.PRISMA.user.findUnique({
-            /** Điều kiện lọc theo email */
+    async findByEmail(email: string) {
+        return this.PRISMA.user.findUnique({
             where: { email }
         });
-        /** Trả về kết quả tìm thấy hoặc null */
-        return USER as IUser | null;
     }
 
     /** Thực hiện truy vấn tìm kiếm người dùng qua ID */

@@ -1,15 +1,18 @@
 /** Import các decorator và module của NestJS */
-import { Controller, Get, Body, Post, Param, Put, Delete, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Body, Post, Param, Put, Delete, Query, UseGuards, ParseIntPipe, Patch, UseInterceptors, UploadedFile } from '@nestjs/common';
+/** Import FileInterceptor để xử lý upload file */
+import { FileInterceptor } from '@nestjs/platform-express';
 /** Import UserService để tương tác với cơ sở dữ liệu và nghiệp vụ người dùng */
 import { UserService } from './user.service';
 /** Import các DTO định nghĩa cấu trúc dữ liệu cho người dùng */
-import { ICreateUserDto, IDynamicSearchDto } from '@/DTO/User/user.dto';
+import { ICreateUserDto, IDynamicSearchDto, IUpdateUserDto } from '@/DTO/User/user.dto';
 /** Import ResponseHelper để trả về dữ liệu theo định dạng chuẩn */
 import { ResponseHelper } from '@/helper/response.helper';
 /** Import RolesGuard để bảo vệ routes */
 import { RolesGuard } from '../auth/roles.guard';
 /** Import Roles decorator để phân quyền */
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 
 /** Định nghĩa controller cho endpoint 'user' */
 @Controller('user')
@@ -31,23 +34,23 @@ export class UserController {
     @Post()
     /** Chỉ admin mới được tạo user */
     @Roles('admin')
+    /** Sử dụng FileInterceptor để nhận file avatar từ form-data */
+    @UseInterceptors(FileInterceptor('avatar'))
     /** Hàm xử lý yêu cầu tạo người dùng */
     async Create(
         /** Lấy dữ liệu từ body */
-        @Body() user_data: ICreateUserDto
+        @Body() user_data: ICreateUserDto,
+        /** Lấy file avatar từ request */
+        @UploadedFile() avatar?: Express.Multer.File
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Gọi hàm Create từ UserService để lưu người dùng */
-            const NEW_USER = await this.USER_SERVICE.Create(user_data);
+        const NEW_USER = await this.USER_SERVICE.Create(user_data, avatar);
 
-            /** Trả về thông báo thành công cùng dữ liệu */
-            return ResponseHelper.Success(NEW_USER, 'User created successfully', 201);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Xử lý lỗi hệ thống */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về thông báo thành công cùng dữ liệu */
+        return ResponseHelper.Success(NEW_USER, 'User created successfully', 201);
     }
+
+
+
 
     /**
      * Tìm kiếm người dùng linh hoạt theo trường và giá trị
@@ -61,17 +64,11 @@ export class UserController {
         /** Lấy dữ liệu tìm kiếm từ query string */
         @Query() query: IDynamicSearchDto
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Thực hiện tìm kiếm thông qua UserService */
-            const RESULTS = await this.USER_SERVICE.DynamicSearch(query);
+        /** Thực hiện tìm kiếm thông qua UserService */
+        const RESULTS = await this.USER_SERVICE.DynamicSearch(query);
 
-            /** Trả về kết quả thành công */
-            return ResponseHelper.Success(RESULTS, 'Search results retrieved successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Phản hồi lỗi nếu có vấn đề xảy ra */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về kết quả thành công */
+        return ResponseHelper.Success(RESULTS, 'Search results retrieved successfully', 200);
     }
 
     /**
@@ -84,19 +81,16 @@ export class UserController {
     /** Hàm xử lý lấy nhiều user */
     async GetManyUser(
         /** Query user_ids */
-        @Query('user_ids') user_ids: string
+        @Query('user_ids') user_ids: string,
+        @Query('page') page: number,
+        /** Query limit */
+        @Query('limit') limit: number
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Gọi service lấy nhiều user, chuyển đổi query string sang mảng */
-            const USERS = await this.USER_SERVICE.GetManyUser(JSON.parse(user_ids));
+        /** Gọi service lấy nhiều user, chuyển đổi query string sang mảng */
+        const USERS = await this.USER_SERVICE.GetManyUser(JSON.parse(user_ids), { page, limit });
 
-            /** Trả về kết quả thành công */
-            return ResponseHelper.Success(USERS, 'Users retrieved successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi hệ thống */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về kết quả thành công */
+        return ResponseHelper.Success(USERS, 'Users retrieved successfully', 200);
     }
 
     /**
@@ -114,17 +108,23 @@ export class UserController {
         /** Query limit */
         @Query('limit') limit: number
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Lấy user list kèm phân trang */
-            const RESULTS = await this.USER_SERVICE.GetAllUser(page, limit);
+        /** Lấy user list kèm phân trang */
+        const RESULTS = await this.USER_SERVICE.GetAllUser(page, limit);
 
-            /** Trả về thành công */
-            return ResponseHelper.Success(RESULTS, 'Users retrieved successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi hệ thống */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về thành công */
+        return ResponseHelper.Success(RESULTS, 'Users retrieved successfully', 200);
+    }
+
+    /**
+     * Lấy thông tin user theo email (public endpoint)
+     * @param email - Email của người dùng
+     */
+    @Public()
+    @Get("/email")
+    /** Hàm lấy thông tin user */
+    async GetUserByEmail(@Query('email') email: string) {
+        const user = await this.USER_SERVICE.GetUserByEmail(email);
+        return ResponseHelper.Success(user, 'User retrieved successfully', 200);
     }
 
     /**
@@ -133,7 +133,7 @@ export class UserController {
      */
     @Get("/:id")
     /** Chỉ admin mới được xem chi tiết */
-    @Roles('admin')
+    @Roles('admin', 'user')
     /** Hàm lấy thông tin user */
     async GetUser(@Param('id', ParseIntPipe) id: number) {
         /**
@@ -143,6 +143,7 @@ export class UserController {
         /** Trả về thành công */
         return ResponseHelper.Success(user, 'User retrieved successfully', 200);
     }
+
 
     /**
      * Xóa người dùng (chỉ dành cho quản trị viên)
@@ -154,19 +155,13 @@ export class UserController {
     /** Hàm xử lý yêu cầu xóa người dùng */
     async Delete(
         /** Lấy ID từ tham số URL */
-        @Param('id') id: string
+        @Param('id') id: number
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Gọi nghiệp vụ xóa người dùng */
-            const DELETED_USER = await this.USER_SERVICE.Delete(Number(id));
+        /** Gọi nghiệp vụ xóa người dùng */
+        const DELETED_USER = await this.USER_SERVICE.Delete(id);
 
-            /** Trả về thông báo xóa thành công */
-            return ResponseHelper.Success(DELETED_USER, 'User deleted successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu quá trình thất bại */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về thông báo xóa thành công */
+        return ResponseHelper.Success(DELETED_USER, 'User deleted successfully', 200);
     }
 
     /**
@@ -174,27 +169,25 @@ export class UserController {
      * @param id - ID người dùng cần cập nhật
      * @param user_data - Thông tin mới
      */
-    @Put("/:id")
+    @Patch("/:id")
     /** Chỉ admin mới được cập nhật user */
     @Roles('admin')
+    /** Sử dụng FileInterceptor để nhận file avatar từ form-data */
+    @UseInterceptors(FileInterceptor('avatar'))
     /** Hàm xử lý yêu cầu cập nhật */
     async Update(
         /** Lấy ID từ URL */
-        @Param('id') id: string,
+        @Param('id') id: number,
         /** Lấy dữ liệu mới từ body */
-        @Body() user_data: ICreateUserDto
+        @Body() user_data: ICreateUserDto,
+        /** Lấy file avatar từ request */
+        @UploadedFile() avatar?: Express.Multer.File
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Gọi hàm cập nhật trong service */
-            const UPDATED_USER = await this.USER_SERVICE.Update(Number(id), user_data);
+        /** Gọi hàm cập nhật trong service, truyền avatar nếu có */
+        const UPDATED_USER = await this.USER_SERVICE.Update(id, user_data, avatar);
 
-            /** Trả về phản hồi thành công qua helper */
-            return ResponseHelper.Success(UPDATED_USER, 'User updated successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi qua helper */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về phản hồi thành công qua helper */
+        return ResponseHelper.Success(UPDATED_USER, 'User updated successfully', 200);
     }
 
     /**
@@ -202,26 +195,33 @@ export class UserController {
      * @param id - ID người dùng cần cập nhật
      * @param user_data - Thông tin mới
      */
-    @Put("/profile/:id")
+    @Patch("/profile/:id")
     /** User và admin đều được cập nhật profile */
     @Roles('user', 'admin')
+    /** Sử dụng FileInterceptor để nhận file avatar từ form-data */
+    @UseInterceptors(FileInterceptor('avatar', {
+        limits: {
+            fileSize: 2 * 1024 * 1024, // 2MB
+        },
+        fileFilter: (req, file, cb) => {
+            if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
+                return cb(new Error('Only image files allowed'), false);
+            }
+            cb(null, true);
+        },
+    }))
     /** Hàm xử lý yêu cầu cập nhật */
     async UserUpdate(
         /** Lấy ID từ URL */
-        @Param('id') id: string,
+        @Param('id') id: number,
         /** Lấy dữ liệu mới từ body */
-        @Body() user_data: ICreateUserDto
+        @Body() user_data: IUpdateUserDto,
+        /** Lấy file avatar từ request */
+        @UploadedFile() avatar?: Express.Multer.File
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Gọi hàm cập nhật trong service */
-            const UPDATED_USER = await this.USER_SERVICE.Update(Number(id), user_data);
+        const UPDATED_USER = await this.USER_SERVICE.Update(id, user_data, avatar);
 
-            /** Trả về phản hồi thành công qua helper */
-            return ResponseHelper.Success(UPDATED_USER, 'User updated successfully', 200);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi qua helper */
-            return ResponseHelper.Error(error.message, 500);
-        }
+        /** Trả về phản hồi thành công qua helper */
+        return ResponseHelper.Success(UPDATED_USER, 'User updated successfully', 200);
     }
 }

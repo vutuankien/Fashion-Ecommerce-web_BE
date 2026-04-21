@@ -6,11 +6,12 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { UserCache } from './user.cache';
 import { UserRepository } from './user.repository';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
 
 @Module({
   imports: [DatabaseModule, AuthModule],
   controllers: [UserController],
-  providers: [UserService, PrismaService, UserCache, UserRepository]
+  providers: [UserService, PrismaService, UserCache, UserRepository,CloudinaryService]
 })
 export class UserModule {}
  

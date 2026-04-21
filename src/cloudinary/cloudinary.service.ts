@@ -231,4 +231,23 @@ export class CloudinaryService {
             );
         }
     }
+
+    // cloudinary.service.ts
+    extractPublicId(url: string): string {
+        // Lấy phần sau /upload/
+        const parts = url.split('/upload/');
+        if (parts.length < 2) return '';
+
+        // Bỏ version prefix nếu có (v1234567890/)
+        const withoutVersion = parts[1].replace(/^v\d+\//, '');
+
+        // Bỏ extension (.jpg, .png, ...)
+        const withoutExtension = withoutVersion.replace(/\.[^/.]+$/, '');
+
+        return withoutExtension; // "user-avatars/abc123"
+    }
+
+    async deleteFile(publicId: string): Promise<void> {
+        await cloudinary.uploader.destroy(publicId);
+    }
 }

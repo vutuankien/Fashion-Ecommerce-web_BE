@@ -27,23 +27,17 @@ export class AuthController {
         /** Nhận dữ liệu từ body */
         @Body() register_dto: IRegisterDto
     ) {
-        /** Khối try để bắt lỗi */
-        try {
-            /** Kiểm tra các trường bắt buộc */
-            if (!register_dto.email || !register_dto.password || !register_dto.name) {
-                /** Trả về lỗi nếu thiếu thông tin */
-                return ResponseHelper.Error('Missing required fields', 400);
-            }
-
-            /** Gọi Service đăng ký người dùng mới */
-            const NEW_USER = await this.AUTH_SERVICE.Register(register_dto);
-
-            /** Trả về Response gọi từ Response Helper */
-            return ResponseHelper.Success(NEW_USER, 'User registered successfully', 201);
-        } /** Khối catch để xử lý lỗi */ catch (error) {
-            /** Trả về lỗi nếu có */
-            return ResponseHelper.Error(error.message, 500);
+        /** Kiểm tra các trường bắt buộc */
+        if (!register_dto.email || !register_dto.password || !register_dto.name) {
+            /** Trả về lỗi nếu thiếu thông tin */
+            return ResponseHelper.Error('Missing required fields', 400);
         }
+
+        /** Gọi Service đăng ký người dùng mới */
+        const NEW_USER = await this.AUTH_SERVICE.Register(register_dto);
+
+        /** Trả về Response gọi từ Response Helper */
+        return ResponseHelper.Success(NEW_USER, 'User registered successfully', 201);
     }
 
     /**

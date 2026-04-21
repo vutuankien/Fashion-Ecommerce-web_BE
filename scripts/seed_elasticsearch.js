@@ -29,12 +29,12 @@ async function createIndexIfNotExists() {
           },
         },
       });
-      console.log(`✅ Index '${INDEX_NAME}' đã tạo thành công!\n`);
+      console.log(`Index '${INDEX_NAME}' đã tạo thành công!\n`);
     } else {
-      console.log(`✅ Index '${INDEX_NAME}' đã tồn tại, tiếp tục seed dữ liệu...\n`);
+      console.log(`Index '${INDEX_NAME}' đã tồn tại, tiếp tục seed dữ liệu...\n`);
     }
   } catch (error) {
-    console.error('❌ Lỗi khi khởi tạo index:', error.message);
+    console.error('Lỗi khi khởi tạo index:', error.message);
     throw error;
   }
 }
@@ -57,10 +57,10 @@ async function getAllProducts() {
         images: true,
       },
     });
-    console.log(`✅ Tìm thấy ${products.length} sản phẩm\n`);
+    console.log(`Tìm thấy ${products.length} sản phẩm\n`);
     return products;
   } catch (error) {
-    console.error('❌ Lỗi khi lấy sản phẩm:', error.message);
+    console.error('Lỗi khi lấy sản phẩm:', error.message);
     throw error;
   }
 }
@@ -101,14 +101,14 @@ async function indexProducts(products) {
     const response = await elasticsearchClient.bulk({ body: bulkBody });
 
     if (response.errors) {
-      console.error('❌ Một số lỗi xảy ra trong quá trình indexing:');
+      console.error('Một số lỗi xảy ra trong quá trình indexing:');
       response.items.forEach((item) => {
         if (item.index?.error) {
           console.error(`  - Document ${item.index._id}: ${item.index.error.reason}`);
         }
       });
     } else {
-      console.log(`✅ Đã index thành công ${products.length} sản phẩm!\n`);
+      console.log(`Đã index thành công ${products.length} sản phẩm!\n`);
     }
 
     // Thống kê
@@ -117,7 +117,7 @@ async function indexProducts(products) {
     console.log(`📊 Thống kê: ${indexed} thành công, ${failed} thất bại`);
     
   } catch (error) {
-    console.error('❌ Lỗi khi indexing sản phẩm:', error.message);
+    console.error('Lỗi khi indexing sản phẩm:', error.message);
     throw error;
   }
 }
@@ -138,10 +138,10 @@ async function main() {
     // Step 3: Index sản phẩm
     await indexProducts(products);
 
-    console.log('\n✅ Seed Elasticsearch hoàn tất!');
+    console.log('\nSeed Elasticsearch hoàn tất!');
     process.exitCode = 0;
   } catch (error) {
-    console.error('\n❌ Seed thất bại:', error.message);
+    console.error('\nSeed thất bại:', error.message);
     process.exitCode = 1;
   } finally {
     await prisma.$disconnect();

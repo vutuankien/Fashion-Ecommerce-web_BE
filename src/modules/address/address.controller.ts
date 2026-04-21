@@ -23,16 +23,10 @@ export class AddressController {
   @Cron('0 12 15 */2 *')
   /** Hàm xử lý đồng bộ tỉnh thành */
   async fetchProvinces() {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện đồng bộ qua service */
-      const DATA = await this.ADDRESS_SERVICE.fetchProvinces();
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch provinces successfully', 201);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Thực hiện đồng bộ qua service */
+    const DATA = await this.ADDRESS_SERVICE.fetchProvinces();
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch provinces successfully', 201);
   }
 
   /** Endpoint lấy tỉnh thành theo id */
@@ -57,21 +51,15 @@ export class AddressController {
     /** Nhận page từ query */
     @Query('page') page: string = '1'
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Chuyển đổi limit sang số */
-      const LIMIT_NUM = parseInt(limit) || 10;
-      /** Chuyển đổi page sang số */
-      const PAGE_NUM = parseInt(page) || 1;
+    /** Chuyển đổi limit sang số */
+    const LIMIT_NUM = parseInt(limit) || 10;
+    /** Chuyển đổi page sang số */
+    const PAGE_NUM = parseInt(page) || 1;
 
-      /** Lấy dữ liệu từ service */
-      const DATA = await this.ADDRESS_SERVICE.getAllProvinces(LIMIT_NUM, PAGE_NUM);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch all provinces successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Lấy dữ liệu từ service */
+    const DATA = await this.ADDRESS_SERVICE.getAllProvinces(LIMIT_NUM, PAGE_NUM);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch all provinces successfully', 200);
   }
 
   /** Endpoint sync quận huyện từ API - Chạy mỗi 2 tháng vào ngày 15 lúc 12:00 PM */
@@ -80,16 +68,10 @@ export class AddressController {
   @Cron('0 12 15 */2 *')
   /** Hàm xử lý đồng bộ quận huyện */
   async fetchDistricts() {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện đồng bộ qua service */
-      const DATA = await this.ADDRESS_SERVICE.fetchDistricts();
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch districts successfully', 201);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Thực hiện đồng bộ qua service */
+    const DATA = await this.ADDRESS_SERVICE.fetchDistricts();
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch districts successfully', 201);
   }
 
   /** Endpoint lấy quận huyện theo id */
@@ -114,21 +96,15 @@ export class AddressController {
     /** Nhận page từ query */
     @Query('page') page: string = '1'
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Chuyển đổi limit sang số */
-      const LIMIT_NUM = parseInt(limit) || 10;
-      /** Chuyển đổi page sang số */
-      const PAGE_NUM = parseInt(page) || 1;
+    /** Chuyển đổi limit sang số */
+    const LIMIT_NUM = parseInt(limit) || 10;
+    /** Chuyển đổi page sang số */
+    const PAGE_NUM = parseInt(page) || 1;
 
-      /** Lấy dữ liệu từ service */
-      const DATA = await this.ADDRESS_SERVICE.getAllDistricts(LIMIT_NUM, PAGE_NUM);
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch all districts successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Lấy dữ liệu từ service */
+    const DATA = await this.ADDRESS_SERVICE.getAllDistricts(LIMIT_NUM, PAGE_NUM);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch all districts successfully', 200);
   }
 
   /** Endpoint sync xã phường từ API - Chạy mỗi 2 tháng vào ngày 15 lúc 12:00 PM */
@@ -137,16 +113,10 @@ export class AddressController {
   @Cron('0 12 15 */2 *')
   /** Hàm xử lý đồng bộ xã phường */
   async fetchAllCommunesByDistricts() {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Thực hiện đồng bộ qua service */
-      const DATA = await this.ADDRESS_SERVICE.fetchAllCommunesByDistricts();
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch all communes successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
-    }
+    /** Thực hiện đồng bộ qua service */
+    const DATA = await this.ADDRESS_SERVICE.fetchAllCommunesByDistricts();
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch all communes successfully', 200);
   }
 
   /** Endpoint lấy xã phường theo id */
@@ -176,31 +146,25 @@ export class AddressController {
     /** Nhận page từ query */
     @Query('page') page: string = '1'
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Chuyển đổi limit sang số */
-      const LIMIT_NUM = parseInt(limit) || 10;
-      /** Chuyển đổi page sang số */
-      const PAGE_NUM = parseInt(page) || 1;
+    /** Chuyển đổi limit sang số */
+    const LIMIT_NUM = parseInt(limit) || 10;
+    /** Chuyển đổi page sang số */
+    const PAGE_NUM = parseInt(page) || 1;
 
-      /** Nếu có district_id thì filter theo district */
-      if (district_id) {
-        /** Kiểm tra có province_id không */
-        const DATA = province_id
-          ? /** Lấy theo cả district và province */ await this.ADDRESS_SERVICE.getCommunesByDistrictIdAndProvinceId(district_id, province_id, LIMIT_NUM, PAGE_NUM)
-          : /** Lấy theo district */ await this.ADDRESS_SERVICE.getCommunesByDistrictId(district_id, LIMIT_NUM, PAGE_NUM);
+    /** Nếu có district_id thì filter theo district */
+    if (district_id) {
+      /** Kiểm tra có province_id không */
+      const DATA = province_id
+        ? /** Lấy theo cả district và province */ await this.ADDRESS_SERVICE.getCommunesByDistrictIdAndProvinceId(district_id, province_id, LIMIT_NUM, PAGE_NUM)
+        : /** Lấy theo district */ await this.ADDRESS_SERVICE.getCommunesByDistrictId(district_id, LIMIT_NUM, PAGE_NUM);
 
-        /** Trả về kết quả thành công */
-        return ResponseHelper.Success(DATA, 'Fetch communes by district successfully', 200);
-      }
-
-      /** Không có district_id thì lấy tất cả */
-      const DATA = await this.ADDRESS_SERVICE.getAllCommunes(LIMIT_NUM, PAGE_NUM);
       /** Trả về kết quả thành công */
-      return ResponseHelper.Success(DATA, 'Fetch all communes successfully', 200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message, 500);
+      return ResponseHelper.Success(DATA, 'Fetch communes by district successfully', 200);
     }
+
+    /** Không có district_id thì lấy tất cả */
+    const DATA = await this.ADDRESS_SERVICE.getAllCommunes(LIMIT_NUM, PAGE_NUM);
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(DATA, 'Fetch all communes successfully', 200);
   }
 }

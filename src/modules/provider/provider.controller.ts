@@ -52,17 +52,10 @@ export class ProviderController {
     /** Nhận province_id từ query */
     @Query('province_id') province_id?: string
   ) {
-    /** Khối try để bắt lỗi */
-    try {
-      /** Lấy toàn bộ danh sách qua service */
-      const RESPONSE = await this.PROVIDER_SERVICE.findAll({ page, limit, search, sortBy, sortOrder, typeProvider, province_id });
+    const RESPONSE = await this.PROVIDER_SERVICE.findAll({ page, limit, search, sortBy, sortOrder, typeProvider, province_id });
 
-      /** Trả về kết quả thành công */
-      return ResponseHelper.Success(RESPONSE,"Get provider successfully",200);
-    } /** Khối catch để xử lý lỗi */ catch (error) {
-      /** Trả về lỗi nếu có */
-      return ResponseHelper.Error(error.message,500);
-    }
+    /** Trả về kết quả thành công */
+    return ResponseHelper.Success(RESPONSE, "Get provider successfully", 200);
   }
 
   /** Controller lấy provider theo id */

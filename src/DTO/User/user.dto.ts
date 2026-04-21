@@ -93,6 +93,36 @@ export class ICreateUserDto {
     provider: string;
 }
 
+
+//GIAO DIỆN UPDATE DTO
+export class IUpdateUserDto{
+    @IsString()
+    @IsOptional()
+    name?:string;
+    @IsEmail()
+    @IsOptional()
+    email?:string;
+    @IsEnum(UserRole)
+    @IsOptional()
+    role?:string;
+    @IsNumber()
+    @Min(0)
+    @IsOptional()
+    age?:number;
+    @IsString()
+    @IsOptional()
+    address?:string;
+    @IsString()
+    @IsOptional()
+    phone?:string;
+    @IsString()
+    @IsOptional()
+    password?:string;
+    @IsString()
+    @IsOptional()
+    avatar_url?:string;
+}
+
 /** Giao diện tìm kiếm người dùng nâng cao */
 export class ISearchUserDto {
     /** Tên người dùng */

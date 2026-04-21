@@ -5,19 +5,23 @@ import { UserCache } from './user.cache';
 /** Nhập khẩu kho lưu trữ người dùng để thực hiện các thao tác ghi dữ liệu */
 import { UserRepository } from './user.repository';
 /** Nhập khẩu các DTO cho người dùng */
-import { ICreateUserDto } from '../../DTO/User/user.dto';
+import { ICreateUserDto, IUpdateUserDto } from '../../DTO/User/user.dto';
 /** Nhập khẩu dịch vụ mã hóa mật khẩu */
 import { PasswordService } from '../auth/password.service';
 import { IUser } from '@/interfaces/user/user.interface';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
+import sharp from 'sharp';
+
+import { Logger } from '@nestjs/common';
 /** Interface cho pagination options */
-interface PaginationOptions {
+export interface PaginationOptions {
     page?: number;      // Trang hiện tại (bắt đầu từ 1)
     limit?: number;     // Số lượng items mỗi trang
     offset?: number;    // Hoặc dùng offset thay vì page
 }
 
 /** Interface cho kết quả trả về */
-interface PaginatedResult<T> {
+export interface PaginatedResult<T> {
     data: T[];
     pagination: {
         total: number;
@@ -32,22 +36,34 @@ interface PaginatedResult<T> {
 /** Lớp điều phối logic giữa Cache và Repository */
 @Injectable()
 export class UserService {
+    private readonly logger = new Logger(UserService.name);
+
     /** Hàm khởi tạo với các thành phần của lớp dữ liệu */
     constructor(
         /** Thành phần xử lý bộ nhớ đệm */
-        private readonly CACHE: UserCache = new UserCache(),
+        private readonly CACHE: UserCache,
         /** Thành phần xử lý cơ sở dữ liệu gốc */
-        private readonly REPO: UserRepository = new UserRepository()
+        private readonly REPO: UserRepository,
+        /** Thành phần xử lý lưu trữ ảnh qua Cloudinary */
+        private readonly CLOUDINARY: CloudinaryService
     ) {}
 
     /** Nghiệp vụ đăng ký/tạo mới người dùng */
-    async Create(dto: ICreateUserDto) {
+    async Create(dto: ICreateUserDto, avatar?: Express.Multer.File) {
         /** Kiểm tra sự tồn tại của email qua lớp Cache (đã bao gồm kiểm tra DB bên dưới) */
         const EXISTING_USER = await this.CACHE.getByEmail(dto.email);
         /** Nếu đã tồn tại người dùng trùng email */
         if (EXISTING_USER) {
             /** Ném lỗi xung đột dữ liệu */
             throw new ConflictException('Email này đã được sử dụng');
+        }
+
+        /** Xử lý upload avatar lên Cloudinary nếu có file */
+        if (avatar) {
+            /** Upload và lấy URL ảnh đã tối ưu */
+            const AVATAR_URL = await this.OptimizeAndUploadAvatar(avatar);
+            /** Gán URL avatar vào DTO */
+            dto.avatar_url = AVATAR_URL;
         }
 
         /** Xử lý băm mật khẩu bảo mật */
@@ -70,13 +86,10 @@ export class UserService {
 
     /** Nghiệp vụ lấy thông tin chi tiết một người dùng */
     async GetUserByEmail(email: string) {
-        /** Tìm kiếm thông tin qua lớp Cache */
-        const USER = await this.CACHE.getByEmail(email);
-
-        /** Nếu không tìm thấy người dùng */
+        
+        const USER = await this.REPO.findByEmail(email);
         if (!USER) {
-            /** Ném lỗi không tìm thấy tài nguyên */
-            throw new NotFoundException('Không tìm thấy người dùng');
+            throw new NotFoundException('User not found');
         }
         /** Trả về đối tượng người dùng */
         return USER;
@@ -242,13 +255,31 @@ export class UserService {
     }
 
     /** Nghiệp vụ cập nhật thông tin người dùng */
-    async Update(id: number, dto: ICreateUserDto) {
+    async Update(id: number, dto: IUpdateUserDto, avatar?: Express.Multer.File) {
         /** Tìm người dùng cần cập nhật */
         const USER = await this.REPO.findById(id);
         /** Nếu không tồn tại */
         if (!USER) {
             /** Ném lỗi không tìm thấy */
             throw new NotFoundException('Không tìm thấy người dùng');
+        }
+
+        /** Xử lý upload avatar mới nếu có file */
+        if (avatar) {
+            /** Upload ảnh mới lên Cloudinary */
+            const NEW_AVATAR_URL = await this.OptimizeAndUploadAvatar(avatar);
+            /** Gán URL avatar mới vào DTO */
+            dto.avatar_url = NEW_AVATAR_URL;
+
+            /** Xóa ảnh cũ trên Cloudinary nếu tồn tại */
+            if (USER.avatar_url) {
+                /** Trích xuất public_id từ URL */
+                const OLD_PUBLIC_ID = this.CLOUDINARY.extractPublicId(USER.avatar_url);
+                /** Gọi xóa file cũ, bắt lỗi để không ảnh hưởng flow chính */
+                await this.CLOUDINARY.deleteFile(OLD_PUBLIC_ID).catch(() => {
+                    this.logger.warn(`Không thể xóa avatar cũ: ${OLD_PUBLIC_ID}`);
+                });
+            }
         }
 
         /** Nếu có mật khẩu mới thì băm */
@@ -266,6 +297,33 @@ export class UserService {
 
         /** Trả về người dùng đã cập nhật */
         return UPDATED_USER;
+    }
+
+    /** Phương thức tối ưu hóa và upload avatar lên Cloudinary */
+    private async OptimizeAndUploadAvatar(avatar: Express.Multer.File): Promise<string> {
+        /** Kiểm tra tính hợp lệ của file */
+        await this.CLOUDINARY.validateFile(avatar);
+
+        /** Tối ưu hóa ảnh: resize 400x400, nén JPEG chất lượng 80 */
+        const OPTIMIZED_BUFFER = await sharp(avatar.buffer)
+            .resize(400, 400, { fit: 'cover', position: 'center' })
+            .jpeg({ quality: 80, mozjpeg: true })
+            .toBuffer();
+
+        /** Tạo object file mới với buffer đã tối ưu */
+        const OPTIMIZED_FILE: Express.Multer.File = {
+            ...avatar,
+            buffer: OPTIMIZED_BUFFER,
+            size: OPTIMIZED_BUFFER.length,
+        };
+
+        /** Upload file đã tối ưu lên Cloudinary */
+        const UPLOAD_RESULT = await this.CLOUDINARY.uploadFile(OPTIMIZED_FILE, {
+            folder: 'user-avatars',
+        });
+
+        /** Trả về URL ảnh bảo mật */
+        return UPLOAD_RESULT.secure_url;
     }
 }
 //#endregion
