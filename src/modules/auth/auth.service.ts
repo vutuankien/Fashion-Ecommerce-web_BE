@@ -424,10 +424,16 @@ export class AuthService {
                 refresh_token: REFRESH_TOKEN,
             };
 
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            /** Log chi tiết lỗi để debug */
+            console.error('Clerk verification error:', {
+                message: error.message,
+                stack: error.stack,
+                code: error.code
+            });
             throw new UnauthorizedException('Invalid Clerk token');
         }
+
     }
 
 }

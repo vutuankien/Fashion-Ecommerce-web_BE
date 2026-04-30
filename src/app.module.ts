@@ -26,6 +26,7 @@ import { AttributeModule } from './modules/attribute/attribute.module';
 import { CartModule } from './modules/cart/cart.module';
 import { FollowShopModule } from './modules/follow-shop/follow-shop.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { VoucherModule } from './modules/voucher/voucher.module';
     CartModule,
     FollowShopModule,
     VoucherModule,
+    WishlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
